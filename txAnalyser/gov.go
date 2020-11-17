@@ -27,7 +27,7 @@ func (object *Analyser) onGovMessages(db *gorm.DB,
 	switch msg.Type() {
 	case govMsgTypeSubmitProposal:
 		// 提议
-		message := msg.(*govTypes.KuMsgSubmitProposal)
+		message := msg.(govTypes.KuMsgSubmitProposal)
 		var messageData govTypes.MsgSubmitProposal
 		object.cdc.MustUnmarshalBinaryLengthPrefixed(message.GetData(), &messageData)
 		tx.From = messageData.Sender().String()
@@ -36,7 +36,7 @@ func (object *Analyser) onGovMessages(db *gorm.DB,
 
 	case govMsgTypeDeposit:
 		// 质押
-		message := msg.(*govTypes.KuMsgDeposit)
+		message := msg.(govTypes.KuMsgDeposit)
 		var messageData govTypes.MsgDeposit
 		object.cdc.MustUnmarshalBinaryLengthPrefixed(message.GetData(), &messageData)
 		tx.From = messageData.Sender().String()
@@ -47,7 +47,7 @@ func (object *Analyser) onGovMessages(db *gorm.DB,
 
 	case govMsgTypeVote:
 		// 投票
-		message := msg.(*govTypes.KuMsgVote)
+		message := msg.(govTypes.KuMsgVote)
 		var messageData govTypes.MsgVote
 		object.cdc.MustUnmarshalBinaryLengthPrefixed(message.GetData(), &messageData)
 		tx.From = messageData.Sender().String()

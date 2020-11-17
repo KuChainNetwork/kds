@@ -25,7 +25,7 @@ func (object *Analyser) onSlashingMessages(db *gorm.DB,
 	tx *model.TX) (err error) {
 	switch msg.Type() {
 	case slashMsgTypeUnJail:
-		message := msg.(*slashingTypes.KuMsgUnjail)
+		message := msg.(slashingTypes.KuMsgUnjail)
 		var messageData slashingTypes.MsgUnjail
 		object.cdc.MustUnmarshalBinaryLengthPrefixed(message.GetData(), &messageData)
 		tx.From = messageData.Sender().String()
