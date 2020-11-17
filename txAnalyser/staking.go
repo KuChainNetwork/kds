@@ -36,8 +36,10 @@ func (object *Analyser) onStakingMessages(db *gorm.DB,
 		object.cdc.MustUnmarshalBinaryLengthPrefixed(message.GetData(), &messageData)
 		tx.From = messageData.Sender().String()
 		tx.To = stakingTypes.ModuleName
-		tx.Amount = util.Coin2Decimal(message.GetTransfers()[0].Amount[0], config.Exp).String() //FIXME
-		tx.Denom = message.GetTransfers()[0].Amount[0].Denom
+		if message.Transfers != nil && len(message.Transfers) > 0 {
+			tx.Amount = util.Coin2Decimal(message.GetTransfers()[0].Amount[0], config.Exp).String() //FIXME
+			tx.Denom = message.GetTransfers()[0].Amount[0].Denom
+		}
 		object.fillMessageAndMessageData(tx, message, &messageData)
 		if 0 == txResult.Code {
 			err = service.NewValidator().Add(object.db, &model.Validator{
@@ -63,7 +65,7 @@ func (object *Analyser) onStakingMessages(db *gorm.DB,
 
 	case stakingMsgTypeDelegate:
 		// 抵押
-		message := msg.(*stakingTypes.KuMsgDelegate)
+		message := msg.(stakingTypes.KuMsgDelegate)
 		var messageData stakingTypes.MsgDelegate
 		object.cdc.MustUnmarshalBinaryLengthPrefixed(message.GetData(), &messageData)
 		tx.From = messageData.Sender().String()
