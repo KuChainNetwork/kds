@@ -58,6 +58,7 @@ func main() {
 	flag.StringVar(&password, "password", "dev", "mysql database password")
 	flag.StringVar(&host, "host", "localhost", "mysql database host")
 	flag.IntVar(&port, "port", 3306, "mysql database port")
+	flag.StringVar(&database, "database", "dev", "mysql database name")
 	flag.IntVar(&retryTimes, "retryTimes", 60, "connect mysql retry times")
 	flag.Int64Var(&batchLimit, "batchLimit", 1024, "analyzer batch process count limit")
 	flag.StringVar(&chainID, "chainId", "kratos", "chain id")
