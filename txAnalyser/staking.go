@@ -31,7 +31,7 @@ func (object *Analyser) onStakingMessages(db *gorm.DB,
 	switch msg.Type() {
 	case stakingMsgTypeCreate:
 		// 创建验证人
-		message := msg.(*stakingTypes.KuMsgCreateValidator)
+		message := msg.(stakingTypes.KuMsgCreateValidator)
 		var messageData stakingTypes.MsgCreateValidator
 		object.cdc.MustUnmarshalBinaryLengthPrefixed(message.GetData(), &messageData)
 		tx.From = messageData.Sender().String()
