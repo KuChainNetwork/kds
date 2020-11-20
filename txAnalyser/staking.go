@@ -118,7 +118,7 @@ func (object *Analyser) onStakingMessages(db *gorm.DB,
 
 	case stakingMsgTypeBeginUnBonding:
 		// 解除抵押
-		message := msg.(*stakingTypes.KuMsgUnbond)
+		message := msg.(stakingTypes.KuMsgUnbond)
 		var messageData stakingTypes.MsgUndelegate
 		object.cdc.MustUnmarshalBinaryLengthPrefixed(message.GetData(), &messageData)
 		tx.From = stakingTypes.ModuleName
