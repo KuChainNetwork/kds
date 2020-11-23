@@ -28,7 +28,7 @@ func (object *Analyser) onGovMessages(db *gorm.DB,
 	case govMsgTypeSubmitProposal:
 		// 提议
 		message := msg.(govTypes.KuMsgSubmitProposal)
-		var messageData govTypes.MsgSubmitProposal
+		var messageData govTypes.MsgSubmitProposalBase
 		object.cdc.MustUnmarshalBinaryLengthPrefixed(message.GetData(), &messageData)
 		tx.From = messageData.Sender().String()
 		tx.To = messageData.Proposer.String()
