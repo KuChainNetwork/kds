@@ -98,6 +98,10 @@ func (object *Analyser) analyze(limit int64) (err error) {
 				}
 				err = object.db.Transaction(func(tx *gorm.DB) (err error) {
 					for i, msg := range stdTx.Msgs {
+						// todo: runtime error: index out of range [1] with length 1
+						if len(stdTx.Msgs) != len(blockResults.TxsResults) {
+							continue
+						}
 						txResult := blockResults.TxsResults[i]
 						aTx := &model.TX{
 							Hash:        fmt.Sprintf("%X", blockTx.Hash()),
