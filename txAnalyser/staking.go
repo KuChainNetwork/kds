@@ -88,7 +88,7 @@ func (object *Analyser) onStakingMessages(db *gorm.DB,
 
 	case stakingMsgTypeBeginReDelegate:
 		// 重抵押
-		message := msg.(*stakingTypes.KuMsgRedelegate)
+		message := msg.(stakingTypes.KuMsgRedelegate)
 		var messageData stakingTypes.MsgBeginRedelegate
 		object.cdc.MustUnmarshalBinaryLengthPrefixed(message.GetData(), &messageData)
 		tx.From = messageData.ValidatorDstAccount.String()
