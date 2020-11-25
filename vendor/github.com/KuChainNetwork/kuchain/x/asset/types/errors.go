@@ -1,0 +1,32 @@
+package types
+
+import errs "github.com/cosmos/cosmos-sdk/types/errors"
+
+var (
+	ErrAssetHasCreated                       = errs.Register(ModuleName, 1, "asset has created")
+	ErrAssetDenom                            = errs.Register(ModuleName, 2, "denom format error")
+	ErrAssetDescriptorTooLarge               = errs.Register(ModuleName, 3, "description for coin too large")
+	ErrAssetIssueGTMaxSupply                 = errs.Register(ModuleName, 4, "asset issue cannot great then max supply")
+	ErrAssetNoCreator                        = errs.Register(ModuleName, 5, "asset creator error")
+	ErrAssetCoinNoExit                       = errs.Register(ModuleName, 6, "asset no exit")
+	ErrAssetCoinNoEnough                     = errs.Register(ModuleName, 7, "account coins no enough")
+	ErrAssetFromAccountEmpty                 = errs.Register(ModuleName, 8, "from account empty")
+	ErrAssetToAccountEmpty                   = errs.Register(ModuleName, 9, "to account empty")
+	ErrAssetLockCoinsNoEnough                = errs.Register(ModuleName, 10, "current coins need great or equal to lock coins")
+	ErrAssetLockUnlockBlockHeightErr         = errs.Register(ModuleName, 11, "unlock block height error")
+	ErrAssetUnLockCoins                      = errs.Register(ModuleName, 12, "unlock coins error")
+	ErrAssetCoinsLocked                      = errs.Register(ModuleName, 13, "coins has locked")
+	ErrAssetCoinCannotBeLock                 = errs.Register(ModuleName, 14, "coin state not allowe lock")
+	ErrAssetCoinCannotBeIssue                = errs.Register(ModuleName, 15, "coin state not allowe issue")
+	ErrAssetCoinCannotBeIssueInHeight        = errs.Register(ModuleName, 16, "coin state not allowe issue that in this height")
+	ErrAssetCoinMustCanIssueWhenIssueByBlock = errs.Register(ModuleName, 17, "coin state must can issue when set to issue by height")
+	ErrAssetCoinMustSupplyNeedGTInitSupply   = errs.Register(ModuleName, 18, "coin max_supply need > init_supply")
+	ErrAssetIssueToHeightMustGTCurrentHeight = errs.Register(ModuleName, 19, "coin issue to height must > current height")
+	ErrAssetSymbolError                      = errs.Register(ModuleName, 20, "asset symbol error")
+	ErrAssetCoinNoZero                       = errs.Register(ModuleName, 21, "amount should not be zero")
+	ErrAssetCoinCannotBeBurn                 = errs.Register(ModuleName, 22, "coin state not allowed burn")
+	ErrAssetIssueMaxSupplyShouldNoZero       = errs.Register(ModuleName, 23, "issue max supply should not be zero")
+	ErrAssetApporveNotEnough                 = errs.Register(ModuleName, 24, "apporve coins not enough")
+	ErrAssetApporveCannotChangeLock          = errs.Register(ModuleName, 25, "approve coins cannot change lock mode")
+	ErrAssetMaxSupplyShouldGTEInitSupply     = errs.Register(ModuleName, 26, "max supply should be greater than init supply")
+)
