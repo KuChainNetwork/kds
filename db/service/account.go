@@ -65,7 +65,7 @@ func (object *Account) AddAll(db *gorm.DB, list []*model.Account) (err error) {
 // UpdateAuth 更新公钥
 func (object *Account) UpdateAuth(db *gorm.DB, auth *model.Account) (err error) {
 	err = db.Model(&model.Account{}).
-		Where("Name=?", auth.Name).
-		UpdateColumn("Auth=?", auth.Auth).Error
+		Where("name=?", auth.Name).
+		UpdateColumn("auth=?", auth.Auth).Error
 	return
 }
