@@ -13,5 +13,5 @@ func Coin2Decimal(coin types.Coin, exp int) decimal.Decimal {
 	if nil != err {
 		panic(err)
 	}
-	return dec.Div(decimal.NewFromFloat(math.Pow10(exp)))
+	return dec.DivRound(decimal.NewFromFloat(math.Pow10(exp)), int32(exp))
 }
