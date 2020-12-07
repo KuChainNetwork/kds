@@ -1,9 +1,10 @@
 package service
 
 import (
-	"gorm.io/gorm"
-
 	"kds/db/model"
+
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // BlockData
@@ -17,7 +18,7 @@ func NewBlockData() *BlockData {
 
 // AddAll
 func (object *BlockData) AddAll(db *gorm.DB, blocks []*model.BlockData) (err error) {
-	err = db.Create(blocks).Error
+	err = db.Clauses(clause.OnConflict{DoNothing: true}).Create(blocks).Error
 	return
 }
 

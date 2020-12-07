@@ -50,7 +50,7 @@ func NewGetterGroup(chainId, nodeURI string,
 }
 
 // Start 启动
-func (object *GetterGroup) Start(startHeight int64, newDataNotifyCh chan struct{}) (err error) {
+func (object *GetterGroup) Start(newDataNotifyCh chan struct{}) (err error) {
 	blockHeightCh := make(chan int64, object.maxGetters)
 	blockResultCh := make(chan *types.BlockResponse, object.maxGetters)
 	for i := 0; i < object.maxGetters; i++ {
@@ -78,6 +78,7 @@ func (object *GetterGroup) Start(startHeight int64, newDataNotifyCh chan struct{
 					time.Sleep(1 * time.Second)
 					continue
 				}
+				startHeight := object.srvSystem.GetLastBlockHeight(object.db)
 				if startHeight >= resultBlock.Block.Height {
 					time.Sleep(1 * time.Second)
 					continue
@@ -113,13 +114,12 @@ func (object *GetterGroup) Start(startHeight int64, newDataNotifyCh chan struct{
 				if 0 >= len(blockDataList) {
 					continue
 				}
-				startHeight += int64(total)
 				if err = object.db.Transaction(func(tx *gorm.DB) (err error) {
 					if err = object.srvBlockData.AddAll(tx, blockDataList); nil != err {
 						glog.Fatalln(err)
 						return
 					}
-					if err = object.srvSystem.UpdateLastBlockHeight(tx, startHeight); nil != err {
+					if err = object.srvSystem.UpdateLastBlockHeight(tx, startHeight+int64(total)); nil != err {
 						return
 					}
 					return nil

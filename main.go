@@ -95,7 +95,7 @@ func main() {
 	}
 	// 拉取区块数据
 	gatterGroup := blockDataGetter.NewGetterGroup(chainID, nodeURI, singleton.Cdc, singleton.DB, maxGetters)
-	if err = gatterGroup.Start(singleton.SystemModel.LastBlockHeight, singleton.NewDataNotifyCh); nil != err {
+	if err = gatterGroup.Start(singleton.NewDataNotifyCh); nil != err {
 		glog.Fatalln(err)
 		return
 	}

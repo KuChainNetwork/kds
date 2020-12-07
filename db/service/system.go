@@ -1,6 +1,8 @@
 package service
 
 import (
+	"errors"
+
 	"gorm.io/gorm"
 
 	"kds/db/model"
@@ -39,5 +41,15 @@ func (object *System) Updates(db *gorm.DB, updates map[string]interface{}) (err 
 	err = db.Model(&model.System{}).
 		Where("id=?", 1).
 		Updates(updates).Error
+	return
+}
+
+func (object *System) GetLastBlockHeight(db *gorm.DB) (height int64) {
+	err := db.Model(&model.System{}).
+		Where("id=?", 1).Select("last_block_height").First(&height).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		height = 1
+	}
+
 	return
 }
