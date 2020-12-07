@@ -1,6 +1,7 @@
 package txAnalyser
 
 import (
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -91,18 +92,18 @@ func (object *Analyser) analyze(limit int64) (err error) {
 		for i := 0; i < len(blockDataList); i++ {
 			object.cdc.MustUnmarshalJSON(blockDataList[i].Block, &block)
 			object.cdc.MustUnmarshalJSON(blockDataList[i].Results, &blockResults)
-			for _, blockTx := range block.Block.Txs {
+			for j, blockTx := range block.Block.Txs {
 				object.cdc.MustUnmarshalBinaryLengthPrefixed(blockTx, &stdTx)
 				if 0 >= len(stdTx.Msgs) {
 					continue
 				}
+
 				err = object.db.Transaction(func(tx *gorm.DB) (err error) {
-					for i, msg := range stdTx.Msgs {
-						// todo: runtime error: index out of range [1] with length 1
-						if len(stdTx.Msgs) != len(blockResults.TxsResults) {
-							continue
-						}
-						txResult := blockResults.TxsResults[i]
+					// todo:优化逻辑
+
+					if 1 == len(stdTx.Msgs) {
+						msg := stdTx.Msgs[0]
+						txResult := blockResults.TxsResults[j]
 						aTx := &model.TX{
 							Hash:        fmt.Sprintf("%X", blockTx.Hash()),
 							Height:      block.Block.Height,
@@ -132,6 +133,43 @@ func (object *Analyser) analyze(limit int64) (err error) {
 						}
 						if err = object.srvStatistics.Increment(tx, "total_tx", 1); nil != err {
 							return
+						}
+					} else if 1 < len(stdTx.Msgs) {
+						for k := 0; k < len(stdTx.Msgs); k++ {
+							msg := stdTx.Msgs[k]
+							txResult := blockResults.TxsResults[j]
+							var logs []json.RawMessage
+							singleton.Cdc.MustUnmarshalJSON([]byte(txResult.Log), &logs)
+							aTx := &model.TX{
+								Hash:        fmt.Sprintf("%X", blockTx.Hash()),
+								Height:      block.Block.Height,
+								Route:       msg.Route(),
+								Type:        msg.Type(),
+								Time:        block.Block.Time,
+								Code:        txResult.Code,
+								Log:         string(logs[k]),
+								Info:        txResult.Info,
+								GasWanted:   txResult.GasWanted,
+								GasUsed:     txResult.GasUsed,
+								Events:      object.cdc.MustMarshalJSON(txResult.Events),
+								Message:     []byte(`{}`),
+								MessageData: []byte(`{}`),
+							}
+							// 索引交易
+							singleton.TXTrieTree.Add(aTx.Hash, nil)
+							if h, ok := object.handlerMap[msg.Route()]; ok {
+								if err = h(tx, msg, txResult, aTx); nil != err {
+									return
+								}
+							} else {
+								glog.Fatalln("unknown route:", msg.Route())
+							}
+							if err = object.srvTx.Add(tx, aTx); nil != err {
+								return
+							}
+							if err = object.srvStatistics.Increment(tx, "total_tx", 1); nil != err {
+								return
+							}
 						}
 					}
 					return

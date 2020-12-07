@@ -2,7 +2,9 @@ package db
 
 import (
 	"fmt"
+	"log"
 	"math"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -10,6 +12,7 @@ import (
 	"github.com/golang/glog"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 
 	"kds/db/model"
 	"kds/db/service"
@@ -22,8 +25,17 @@ var (
 
 // connect 连接数据库
 func connect(dsn string, retryTimes int) (err error) {
+	newLogger := logger.New(
+		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+		logger.Config{
+			SlowThreshold: time.Second, // Slow SQL threshold
+			LogLevel:      logger.Warn, // Log level
+			Colorful:      true,        // Disable color
+		},
+	)
+
 	for i := 0; i < retryTimes; i++ {
-		if singleton.DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{}); nil == err {
+		if singleton.DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{Logger: newLogger}); nil == err {
 			break
 		}
 		time.Sleep(1 * time.Second)
