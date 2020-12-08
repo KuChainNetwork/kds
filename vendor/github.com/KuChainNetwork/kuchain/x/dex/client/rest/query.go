@@ -32,13 +32,13 @@ func getCreatorHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		vars := mux.Vars(r)
 		name := vars["creator"]
 		creator, err := chainTypes.NewName(name)
-		if nil != err {
+		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 		getter := types.NewDexRetriever(cliCtx)
 		dex, _, err := getter.GetDexWithHeight(creator)
-		if nil != err {
+		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -53,18 +53,18 @@ func getSigInStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		creatorStr := vars["creator"]
 		accountStr := vars["account"]
 		creator, err := chainTypes.NewAccountIDFromStr(creatorStr)
-		if nil != err {
+		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 		account, err := chainTypes.NewAccountIDFromStr(accountStr)
-		if nil != err {
+		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 		getter := types.NewDexRetriever(cliCtx)
 		coins, _, err := getter.GetSigInWithHeight(account, creator)
-		if nil != err {
+		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return
 		}
@@ -90,16 +90,38 @@ func getSymbolHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 		creator, err := chainTypes.NewName(name)
-		if nil != err {
+		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 		getter := types.NewDexRetriever(cliCtx)
 		var dex *types.Dex
-		if dex, _, err = getter.GetDexWithHeight(creator); nil != err {
+		if dex, _, err = getter.GetDexWithHeight(creator); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
+		baseCreatorName, err := chainTypes.NewName(baseCreator)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		baseCodeName, err := chainTypes.NewName(baseCode)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		baseCode = types.CoinDenom(baseCreatorName, baseCodeName)
+		quoteCreatorName, err := chainTypes.NewName(quoteCreator)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		quoteCodeName, err := chainTypes.NewName(quoteCode)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		quoteCode = types.CoinDenom(quoteCreatorName, quoteCodeName)
 		currency, ok := dex.Symbol(baseCreator, baseCode, quoteCreator, quoteCode)
 		if !ok {
 			rest.WriteErrorResponse(w,

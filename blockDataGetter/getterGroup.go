@@ -65,6 +65,7 @@ func (object *GetterGroup) Start(newDataNotifyCh chan struct{}) (err error) {
 	}
 	go func() {
 		defer close(blockHeightCh)
+		defer close(blockResultCh)
 		var err error
 		var resultBlock *ctypes.ResultBlock
 	loop:
@@ -79,6 +80,9 @@ func (object *GetterGroup) Start(newDataNotifyCh chan struct{}) (err error) {
 					continue
 				}
 				startHeight := object.srvSystem.GetLastBlockHeight(object.db)
+				if 0 >= startHeight {
+					startHeight = 1
+				}
 				if startHeight >= resultBlock.Block.Height {
 					time.Sleep(1 * time.Second)
 					continue

@@ -98,7 +98,7 @@ func (a DexKeeper) SigIn(ctx sdk.Context, id, dex AccountID, amt Coins) error {
 
 	// check user balance
 	balance, err := a.assetKeeper.GetCoins(ctx, id)
-	if err != nil {
+	if nil != err {
 		return errors.Wrapf(err, "GetCoins error")
 	}
 	approve, err := a.assetKeeper.GetApproveCoins(ctx, id, dex)

@@ -50,6 +50,5 @@ func (object *System) GetLastBlockHeight(db *gorm.DB) (height int64) {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		height = 1
 	}
-
 	return
 }

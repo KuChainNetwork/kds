@@ -3,8 +3,6 @@ package db
 import (
 	"fmt"
 	"log"
-	"math"
-	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -19,21 +17,34 @@ import (
 	"kds/singleton"
 )
 
+const (
+	indexBatchSize = 4096
+)
+
 var (
 	initializeOnce sync.Once // 数据库初始化一次
 )
 
+// gLogWrapper
+type gLogWrapper struct {
+}
+
+func (object *gLogWrapper) Write(p []byte) (n int, err error) {
+	glog.Warning(string(p))
+	n = len(p)
+	return
+}
+
 // connect 连接数据库
 func connect(dsn string, retryTimes int) (err error) {
 	newLogger := logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+		log.New(&gLogWrapper{}, "\r\n", log.LstdFlags), // io writer
 		logger.Config{
 			SlowThreshold: time.Second, // Slow SQL threshold
 			LogLevel:      logger.Warn, // Log level
-			Colorful:      true,        // Disable color
+			Colorful:      false,       // Disable color
 		},
 	)
-
 	for i := 0; i < retryTimes; i++ {
 		if singleton.DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{Logger: newLogger}); nil == err {
 			break
@@ -76,23 +87,29 @@ func setDefault() (err error) {
 // searchIndex 建立索引
 func searchIndex() (err error) {
 	// 建立交易索引
-	{
-		var hashList []string
-		if hashList, err = service.NewTX().ListHash(singleton.DB, 0, math.MaxInt64 /*TODO 采用多次加载避免内存使用过大*/); nil != err {
+	var hashList []string
+	for i := 0; ; i++ {
+		if hashList, err = service.NewTX().ListHash(singleton.DB, i*indexBatchSize, indexBatchSize); nil != err {
 			return
 		}
 		for _, hash := range hashList {
 			singleton.TXTrieTree.Add(hash, nil)
 		}
+		if indexBatchSize > len(hashList) {
+			break
+		}
 	}
 	// 建立高度索引
-	{
-		var heightList []int64
-		if heightList, err = service.NewBlock().ListHeight(singleton.DB, 0, math.MaxInt64); nil != err {
+	var heightList []int64
+	for i := 0; ; i++ {
+		if heightList, err = service.NewBlock().ListHeight(singleton.DB, i*indexBatchSize, indexBatchSize); nil != err {
 			return
 		}
 		for _, height := range heightList {
 			singleton.HeightTrieTree.Add(strconv.FormatInt(height, 10), nil)
+		}
+		if indexBatchSize > len(heightList) {
+			break
 		}
 	}
 	return
@@ -108,17 +125,15 @@ func Initialize(username, password, host, database string,
 			host,
 			port,
 			database)
-		if err = connect(dsn, retryTimes); nil != err {
-			return
-		}
-		if err = migrate(); nil != err {
-			return
-		}
-		if err = setDefault(); nil != err {
-			return
-		}
-		if err = searchIndex(); nil != err {
-			return
+		for _, fn := range []func() error{
+			func() error { return connect(dsn, retryTimes) },
+			migrate,
+			setDefault,
+			searchIndex,
+		} {
+			if err = fn(); nil != err {
+				return
+			}
 		}
 	})
 	return

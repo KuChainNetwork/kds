@@ -24,7 +24,7 @@ var (
 	host       = "127.0.0.1"                   // 数据库主机
 	database   = "dev"                         // 数据库名
 	port       = 3307                          // 数据库端口
-	retryTimes = 60                            //
+	retryTimes = 60                            // 数据库链接重试次数
 	batchLimit = int64(1024)                   // 数据批处理大小限制
 	chainID    = "kratos"                      // 链ID
 	nodeURI    = "http://121.89.211.107:34568" // 节点URI

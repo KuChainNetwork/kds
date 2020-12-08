@@ -71,6 +71,7 @@ func (object *TX) List(db *gorm.DB, offset, limit, sortByHeight int) (total int,
 
 // ListHash
 func (object *TX) ListHash(db *gorm.DB, offset, limit int) (list []string, err error) {
+	list = nil
 	if err = db.Model(&model.TX{}).
 		Offset(offset).
 		Limit(limit).
