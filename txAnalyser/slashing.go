@@ -10,8 +10,8 @@ import (
 
 	slashingTypes "github.com/KuChainNetwork/kuchain/x/slashing/types"
 
-	"kds/db/model"
-	"kds/db/service"
+	"kds/dbmodel"
+	"kds/dbservice"
 )
 
 const (
@@ -22,7 +22,7 @@ const (
 func (object *Analyser) onSlashingMessages(db *gorm.DB,
 	msg sdk.Msg,
 	txResult *abci.ResponseDeliverTx,
-	tx *model.TX) (err error) {
+	tx *dbmodel.TX) (err error) {
 	switch msg.Type() {
 	case slashMsgTypeUnJail:
 		message := msg.(slashingTypes.KuMsgUnjail)
@@ -37,7 +37,7 @@ func (object *Analyser) onSlashingMessages(db *gorm.DB,
 		object.fillMessageAndMessageData(tx, message, &messageData)
 		if 0 == txResult.Code {
 			// 出狱
-			err = service.NewValidator().UpdateJailed(object.db, tx.From, false)
+			err = dbservice.NewValidator().UpdateJailed(object.db, tx.From, false)
 		}
 
 	default:

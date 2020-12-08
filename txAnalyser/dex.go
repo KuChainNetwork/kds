@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 
 	"kds/config"
-	"kds/db/model"
+	"kds/dbmodel"
 	"kds/util"
 )
 
@@ -31,7 +31,7 @@ const (
 func (object *Analyser) onDexMessages(db *gorm.DB,
 	msg sdk.Msg,
 	txResult *abci.ResponseDeliverTx,
-	tx *model.TX) (err error) {
+	tx *dbmodel.TX) (err error) {
 	switch msg.Type() {
 	case dexMsgTypeCreateDex:
 		message := msg.(*dexTypes.MsgCreateDex)

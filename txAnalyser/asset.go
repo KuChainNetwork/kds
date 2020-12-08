@@ -12,8 +12,8 @@ import (
 	assetTypes "github.com/KuChainNetwork/kuchain/x/asset/types"
 
 	"kds/config"
-	"kds/db/model"
-	"kds/db/service"
+	"kds/dbmodel"
+	"kds/dbservice"
 	"kds/util"
 )
 
@@ -32,7 +32,7 @@ const (
 func (object *Analyser) onAssetMessages(db *gorm.DB,
 	msg sdk.Msg,
 	txResult *abci.ResponseDeliverTx,
-	tx *model.TX) (err error) {
+	tx *dbmodel.TX) (err error) {
 	switch msg.Type() {
 	case assetMsgTypeCreateCoin:
 		message := msg.(*assetTypes.MsgCreateCoin)
@@ -45,7 +45,7 @@ func (object *Analyser) onAssetMessages(db *gorm.DB,
 		tx.To = assetTypes.ModuleName
 		object.fillMessageAndMessageData(tx, message, messageData)
 		if 0 == txResult.Code {
-			err = service.NewCoin().Add(db, &model.Coin{
+			err = dbservice.NewCoin().Add(db, &dbmodel.Coin{
 				Height:          tx.Height,
 				TXHash:          tx.Hash,
 				Creator:         messageData.Creator.String(),
@@ -69,7 +69,7 @@ func (object *Analyser) onAssetMessages(db *gorm.DB,
 		tx.To = assetTypes.ModuleName
 		object.fillMessageAndMessageData(tx, message, messageData)
 		if 0 == txResult.Code {
-			err = service.NewCoin().UpdateIssue(db, &model.Coin{
+			err = dbservice.NewCoin().UpdateIssue(db, &dbmodel.Coin{
 				Height:      tx.Height,
 				Creator:     messageData.Creator.String(),
 				IssueAmount: util.Coin2Decimal(messageData.Amount, config.Exp).String(),
@@ -135,14 +135,14 @@ func (object *Analyser) onAssetMessages(db *gorm.DB,
 
 	case assetMsgTypeTransfer:
 		message := msg.(*assetTypes.MsgTransfer)
-		var tss []*model.Transfer
+		var tss []*dbmodel.Transfer
 		hash := sha256.New()
 		for _, ts := range message.GetTransfers() {
 			hash.Reset()
 			hash.Write(object.cdc.MustMarshalBinaryBare(msg))
 			hash.Write(object.cdc.MustMarshalBinaryBare(ts))
 			hashHex := hex.EncodeToString(hash.Sum(nil))
-			tss = append(tss, &model.Transfer{
+			tss = append(tss, &dbmodel.Transfer{
 				TxHeight: tx.Height,
 				TxHash:   tx.Hash,
 				Hash:     hashHex,
@@ -157,7 +157,7 @@ func (object *Analyser) onAssetMessages(db *gorm.DB,
 				tx.Denom = ts.Amount[0].Denom
 			}
 		}
-		err := service.NewTransfer().AddAll(db, tss)
+		err := dbservice.NewTransfer().AddAll(db, tss)
 		if nil != err {
 			glog.Fatalln(err)
 		}

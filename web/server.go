@@ -13,27 +13,27 @@ import (
 	"github.com/golang/glog"
 	"gorm.io/gorm"
 
-	"kds/db/model"
-	"kds/db/service"
+	"kds/dbmodel"
+	"kds/dbservice"
 	"kds/singleton"
 	"kds/types"
 )
 
 // HTTPServer HTTP服务器
 type HTTPServer struct {
-	port          int                 // 端口
-	db            *gorm.DB            // 数据库
-	ln            net.Listener        // 侦听器
-	wg            sync.WaitGroup      // 等待组
-	startFlag     int32               // 开始标志
-	stopFlag      int32               // 停止标志
-	srvBlock      *service.Block      // block数据服务
-	srvTx         *service.TX         // tx数据服务
-	srvValidator  *service.Validator  // validator数据服务
-	srvDelegate   *service.Delegate   // delegate数据服务
-	srvCoin       *service.Coin       // coin数据服务
-	srvStatistics *service.Statistics // Statistics数据服务
-	srvAccount    *service.Account    // Account数据服务
+	port          int                   // 端口
+	db            *gorm.DB              // 数据库
+	ln            net.Listener          // 侦听器
+	wg            sync.WaitGroup        // 等待组
+	startFlag     int32                 // 开始标志
+	stopFlag      int32                 // 停止标志
+	srvBlock      *dbservice.Block      // block数据服务
+	srvTx         *dbservice.TX         // tx数据服务
+	srvValidator  *dbservice.Validator  // validator数据服务
+	srvDelegate   *dbservice.Delegate   // delegate数据服务
+	srvCoin       *dbservice.Coin       // coin数据服务
+	srvStatistics *dbservice.Statistics // Statistics数据服务
+	srvAccount    *dbservice.Account    // Account数据服务
 }
 
 // NewHTTPServer 工厂方法
@@ -41,13 +41,13 @@ func NewHTTPServer(port int, db *gorm.DB) *HTTPServer {
 	return &HTTPServer{
 		port:          port,
 		db:            db,
-		srvBlock:      service.NewBlock(),
-		srvTx:         service.NewTX(),
-		srvValidator:  service.NewValidator(),
-		srvDelegate:   service.NewDelegate(),
-		srvCoin:       service.NewCoin(),
-		srvStatistics: service.NewStatistics(),
-		srvAccount:    service.NewAccount(),
+		srvBlock:      dbservice.NewBlock(),
+		srvTx:         dbservice.NewTX(),
+		srvValidator:  dbservice.NewValidator(),
+		srvDelegate:   dbservice.NewDelegate(),
+		srvCoin:       dbservice.NewCoin(),
+		srvStatistics: dbservice.NewStatistics(),
+		srvAccount:    dbservice.NewAccount(),
 	}
 }
 
@@ -144,7 +144,7 @@ func (object *HTTPServer) search(ctx *fiber.Ctx) (err error) {
 
 // homePageStatistics 主页统计
 func (object *HTTPServer) homePageStatistics(ctx *fiber.Ctx) (err error) {
-	var statistics *model.Statistics
+	var statistics *dbmodel.Statistics
 	if statistics, err = object.srvStatistics.Load(object.db); nil != err {
 		return
 	}
@@ -159,7 +159,7 @@ func (object *HTTPServer) blockList(ctx *fiber.Ctx) (err error) {
 		return
 	}
 	var total int
-	var list []*model.Block
+	var list []*dbmodel.Block
 	if total, list, err = object.srvBlock.List(object.db,
 		req.Offset(),
 		req.Limit(),
@@ -180,7 +180,7 @@ func (object HTTPServer) txList(ctx *fiber.Ctx) (err error) {
 		return
 	}
 	var total int
-	var list []*model.TX
+	var list []*dbmodel.TX
 	if total, list, err = object.srvTx.List(object.db,
 		req.Offset(),
 		req.Limit(),
@@ -201,7 +201,7 @@ func (object *HTTPServer) validatorList(ctx *fiber.Ctx) (err error) {
 		return
 	}
 	var total int
-	var list []*model.Validator
+	var list []*dbmodel.Validator
 	if total, list, err = object.srvValidator.List(object.db,
 		req.Status,
 		req.Offset(),
@@ -222,7 +222,7 @@ func (object *HTTPServer) delegateList(ctx *fiber.Ctx) (err error) {
 		return
 	}
 	var total int
-	var list []*model.Delegate
+	var list []*dbmodel.Delegate
 	if total, list, err = object.srvDelegate.List(object.db,
 		req.Offset(),
 		req.Limit()); nil != err {
@@ -242,7 +242,7 @@ func (object *HTTPServer) coinList(ctx *fiber.Ctx) (err error) {
 		return
 	}
 	var total int
-	var list []*model.Coin
+	var list []*dbmodel.Coin
 	if total, list, err = object.srvCoin.List(object.db,
 		req.Offset(),
 		req.Limit()); nil != err {

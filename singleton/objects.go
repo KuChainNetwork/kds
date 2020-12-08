@@ -9,8 +9,6 @@ import (
 	"gorm.io/gorm"
 
 	"kds/trieTree"
-
-	"kds/db/model"
 )
 
 const (
@@ -21,7 +19,7 @@ const (
 
 var (
 	DB              *gorm.DB       // 数据库单例
-	SystemModel     *model.System  // system数据模型单例
+	LastBlockHeight int64          // 最后区块高度
 	NewDataNotifyCh chan struct{}  // 新数据通知通道
 	Cdc             *amino.Codec   // 获取编解码器单例
 	TXTrieTree      *trieTree.Node // 交易前缀树

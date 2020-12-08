@@ -18,8 +18,8 @@ import (
 	"gorm.io/gorm"
 
 	"kds/config"
-	"kds/db/model"
-	"kds/db/service"
+	"kds/dbmodel"
+	"kds/dbservice"
 	"kds/singleton"
 	"kds/util"
 )
@@ -56,9 +56,9 @@ func (object *Genesis) processAccount(cdc *amino.Codec,
 	if err = cdc.UnmarshalJSON(raw, &state); nil != err {
 		return
 	}
-	var accountList []*model.Account
+	var accountList []*dbmodel.Account
 	for _, account := range state.Accounts {
-		accountList = append(accountList, &model.Account{
+		accountList = append(accountList, &dbmodel.Account{
 			Height:    config.StartBlockHeight,
 			TXHash:    "",
 			Creator:   object.doc.ChainID,
@@ -69,10 +69,10 @@ func (object *Genesis) processAccount(cdc *amino.Codec,
 			Time:      object.doc.GenesisTime,
 		})
 	}
-	if err = service.NewAccount().AddAll(db, accountList); nil != err {
+	if err = dbservice.NewAccount().AddAll(db, accountList); nil != err {
 		return
 	}
-	if err = service.NewStatistics().Increment(db, "total_account", len(accountList)); nil != err {
+	if err = dbservice.NewStatistics().Increment(db, "total_account", len(accountList)); nil != err {
 		return
 	}
 	return
@@ -92,11 +92,11 @@ func (object *Genesis) processAsset(cdc *amino.Codec,
 	if err = cdc.UnmarshalJSON(raw, &state); nil != err {
 		return
 	}
-	var assetList []*model.Asset
-	var coinList []*model.Coin
+	var assetList []*dbmodel.Asset
+	var coinList []*dbmodel.Coin
 	for _, asset := range state.GenesisAssets {
 		for _, coin := range asset.GetCoins() {
-			assetList = append(assetList, &model.Asset{
+			assetList = append(assetList, &dbmodel.Asset{
 				Height: config.StartBlockHeight,
 				TXHash: "",
 				RealId: asset.GetID().String(),
@@ -107,7 +107,7 @@ func (object *Genesis) processAsset(cdc *amino.Codec,
 		}
 	}
 	for _, coin := range state.GenesisCoins {
-		coinList = append(coinList, &model.Coin{
+		coinList = append(coinList, &dbmodel.Coin{
 			Height:          config.StartBlockHeight,
 			TXHash:          "",
 			Creator:         coin.GetCreator().String(),
@@ -120,8 +120,8 @@ func (object *Genesis) processAsset(cdc *amino.Codec,
 			Time:            object.doc.GenesisTime,
 		})
 	}
-	if err = service.NewAsset().AddAll(db, assetList); nil == err {
-		err = service.NewCoin().AddAll(db, coinList)
+	if err = dbservice.NewAsset().AddAll(db, assetList); nil == err {
+		err = dbservice.NewCoin().AddAll(db, coinList)
 	}
 	return
 }
@@ -140,11 +140,11 @@ func (object *Genesis) processGenUtil(cdc *amino.Codec,
 	if err = cdc.UnmarshalJSON(raw, &state); nil != err {
 		return
 	}
-	srvValidator := service.NewValidator()
-	srvTransfer := service.NewTransfer()
-	srvStaking := service.NewStaking()
-	srvDelegate := service.NewDelegate()
-	srvStatistics := service.NewStatistics()
+	srvValidator := dbservice.NewValidator()
+	srvTransfer := dbservice.NewTransfer()
+	srvStaking := dbservice.NewStaking()
+	srvDelegate := dbservice.NewDelegate()
+	srvStatistics := dbservice.NewStatistics()
 	var stdTx chainTypes.StdTx
 	for _, raw = range state.GenTxs {
 		if err = cdc.UnmarshalJSON(raw, &stdTx); nil != err {
@@ -156,7 +156,7 @@ func (object *Genesis) processGenUtil(cdc *amino.Codec,
 				message := msg.(stakingTypes.KuMsgCreateValidator)
 				var create stakingTypes.MsgCreateValidator
 				cdc.MustUnmarshalBinaryLengthPrefixed(message.GetData(), &create)
-				if err = srvValidator.Add(db, &model.Validator{
+				if err = srvValidator.Add(db, &dbmodel.Validator{
 					Height:         config.StartBlockHeight,
 					Validator:      create.ValidatorAccount.String(),
 					CommissionRate: create.CommissionRates.Uint64(),
@@ -174,12 +174,12 @@ func (object *Genesis) processGenUtil(cdc *amino.Codec,
 				cdc.MustUnmarshalBinaryLengthPrefixed(message.GetData(), &delegate)
 				sum256 := sha256.Sum256(raw)
 				hash := sha256.New()
-				var txList []*model.Transfer
+				var txList []*dbmodel.Transfer
 				for _, tx := range message.Transfers {
 					hash.Reset()
 					hash.Write(cdc.MustMarshalBinaryBare(msg))
 					hash.Write(cdc.MustMarshalBinaryBare(tx))
-					txList = append(txList, &model.Transfer{
+					txList = append(txList, &dbmodel.Transfer{
 						TxHeight: 1,
 						TxHash:   hex.EncodeToString(sum256[:]),
 						Hash:     hex.EncodeToString(hash.Sum(nil)),
@@ -194,7 +194,7 @@ func (object *Genesis) processGenUtil(cdc *amino.Codec,
 				if err = srvTransfer.AddAll(db, txList); nil != err {
 					return
 				}
-				if err = srvStaking.Add(db, &model.Staking{
+				if err = srvStaking.Add(db, &dbmodel.Staking{
 					Height:        config.StartBlockHeight,
 					TXHash:        "",
 					Validator:     delegate.ValidatorAccount.String(),
@@ -205,7 +205,7 @@ func (object *Genesis) processGenUtil(cdc *amino.Codec,
 				}); nil != err {
 					return
 				}
-				if err = srvDelegate.Add(db, &model.Delegate{
+				if err = srvDelegate.Add(db, &dbmodel.Delegate{
 					Height:    config.StartBlockHeight,
 					TXHash:    "",
 					Validator: delegate.ValidatorAccount.String(),
@@ -282,7 +282,7 @@ func (object *Genesis) Initialize(db *gorm.DB,
 		}
 		if nil != err {
 			// 创世完成
-			err = service.NewSystem().UpdateLastBlockHeight(tx, 1)
+			err = dbservice.NewSystem().UpdateLastBlockHeight(tx, 1)
 		}
 		return
 	})

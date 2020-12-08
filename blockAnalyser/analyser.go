@@ -11,19 +11,19 @@ import (
 	"gorm.io/gorm"
 
 	"kds/config"
-	"kds/db/model"
-	"kds/db/service"
+	"kds/dbmodel"
+	"kds/dbservice"
 	"kds/singleton"
 )
 
 // Analyser 分析器
 type Analyser struct {
-	db              *gorm.DB            // 数据库
-	cdc             *amino.Codec        // 解码器
-	newDataNotifyCh chan struct{}       // 新数据通知通道
-	wg              sync.WaitGroup      // 等待组
-	srvBlock        *service.Block      // 区块服务
-	srvStatistics   *service.Statistics // 统计服务
+	db              *gorm.DB              // 数据库
+	cdc             *amino.Codec          // 解码器
+	newDataNotifyCh chan struct{}         // 新数据通知通道
+	wg              sync.WaitGroup        // 等待组
+	srvBlock        *dbservice.Block      // 区块服务
+	srvStatistics   *dbservice.Statistics // 统计服务
 }
 
 // New 工厂方法
@@ -34,17 +34,17 @@ func New(db *gorm.DB,
 		db:              db,
 		cdc:             cdc,
 		newDataNotifyCh: newDataNotifyCh,
-		srvBlock:        service.NewBlock(),
-		srvStatistics:   service.NewStatistics(),
+		srvBlock:        dbservice.NewBlock(),
+		srvStatistics:   dbservice.NewStatistics(),
 	}
 }
 
 // analyze 分析
 func (object *Analyser) analyze(limit int64) (err error) {
 	start := int64(config.StartBlockHeight)
-	var block *model.Block
-	blockDataSrv := service.NewBlockData()
-	var blockDataList []*model.BlockData
+	var block *dbmodel.Block
+	blockDataSrv := dbservice.NewBlockData()
+	var blockDataList []*dbmodel.BlockData
 	for {
 		if block, err = object.srvBlock.Latest(object.db); nil != err {
 			return
@@ -56,10 +56,10 @@ func (object *Analyser) analyze(limit int64) (err error) {
 			return
 		}
 		var block ctypes.ResultBlock
-		blocks := make([]*model.Block, 0, limit)
+		blocks := make([]*dbmodel.Block, 0, limit)
 		for i := 0; i < len(blockDataList); i++ {
 			object.cdc.MustUnmarshalJSON(blockDataList[i].Block, &block)
-			blocks = append(blocks, &model.Block{
+			blocks = append(blocks, &dbmodel.Block{
 				Height:    block.Block.Height,
 				Hash:      block.BlockID.Hash.String(),
 				Txn:       int64(len(block.Block.Txs)),

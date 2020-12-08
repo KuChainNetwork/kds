@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"kds/dbservice"
 	"os"
 	"os/signal"
 	"syscall"
@@ -64,23 +65,28 @@ func main() {
 	flag.StringVar(&chainID, "chainId", "kratos", "chain id")
 	flag.StringVar(&nodeURI, "nodeUri", "http://127.0.0.1:26657", "node uri")
 	flag.IntVar(&maxGetters, "maxGetters", 256, "pull block and block result concurrency number")
-	flag.IntVar(&httpPort, "httpPort", 8080, "restful service port")
+	flag.IntVar(&httpPort, "httpPort", 8080, "restful dbservice port")
 	flag.Parse() // 解析命令行
-	// 初始化数据库
+	// 初始化数据库连接
 	err := db.Initialize(username, password, host, database, port, retryTimes)
 	if nil != err {
 		glog.Fatalln(err)
 		return
 	}
 	defer db.Dispose()
+	// 初始化数据表
+	if err = dbservice.Initialize(); nil != err {
+		glog.Fatalln(err)
+		return
+	}
 	// 创世
 	var done bool
 	if err, done = genesis.New(fmt.Sprintf("%s/genesis", nodeURI)).
-		Initialize(singleton.DB, singleton.Cdc, singleton.SystemModel.LastBlockHeight); nil != err {
+		Initialize(singleton.DB, singleton.Cdc, singleton.LastBlockHeight); nil != err {
 		glog.Fatalln(err)
 		return
 	} else if done {
-		singleton.SystemModel.LastBlockHeight = 1
+		singleton.LastBlockHeight = 1
 	}
 	// 开始分析
 	blockAnalyserObject := blockAnalyser.New(singleton.DB, singleton.Cdc, singleton.NewDataNotifyCh)

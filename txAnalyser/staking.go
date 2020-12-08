@@ -10,8 +10,8 @@ import (
 	stakingTypes "github.com/KuChainNetwork/kuchain/x/staking/types"
 
 	"kds/config"
-	"kds/db/model"
-	"kds/db/service"
+	"kds/dbmodel"
+	"kds/dbservice"
 	"kds/util"
 )
 
@@ -27,7 +27,7 @@ const (
 func (object *Analyser) onStakingMessages(db *gorm.DB,
 	msg sdk.Msg,
 	txResult *abci.ResponseDeliverTx,
-	tx *model.TX) (err error) {
+	tx *dbmodel.TX) (err error) {
 	switch msg.Type() {
 	case stakingMsgTypeCreate:
 		// 创建验证人
@@ -42,7 +42,7 @@ func (object *Analyser) onStakingMessages(db *gorm.DB,
 		}
 		object.fillMessageAndMessageData(tx, message, &messageData)
 		if 0 == txResult.Code {
-			err = service.NewValidator().Add(object.db, &model.Validator{
+			err = dbservice.NewValidator().Add(object.db, &dbmodel.Validator{
 				Height:         tx.Height,
 				Validator:      messageData.ValidatorAccount.String(),
 				Status:         int(stakingExported.Unbonded),
@@ -50,7 +50,7 @@ func (object *Analyser) onStakingMessages(db *gorm.DB,
 				Time:           tx.Time,
 			})
 			if nil == err {
-				err = service.NewStatistics().Increment(object.db, "total_validator", 1)
+				err = dbservice.NewStatistics().Increment(object.db, "total_validator", 1)
 			}
 		}
 
@@ -74,7 +74,7 @@ func (object *Analyser) onStakingMessages(db *gorm.DB,
 		tx.Denom = messageData.Amount.Denom
 		object.fillMessageAndMessageData(tx, message, &messageData)
 		if 0 == txResult.Code {
-			err = service.NewDelegate().Add(object.db, &model.Delegate{
+			err = dbservice.NewDelegate().Add(object.db, &dbmodel.Delegate{
 				Height:    tx.Height,
 				TXHash:    tx.Hash,
 				Delegator: messageData.DelegatorAccount.String(),
@@ -97,7 +97,7 @@ func (object *Analyser) onStakingMessages(db *gorm.DB,
 		tx.Denom = messageData.Amount.Denom
 		object.fillMessageAndMessageData(tx, message, &messageData)
 		if 0 == txResult.Code {
-			err = service.NewDelegate().AddAll(object.db, []*model.Delegate{{
+			err = dbservice.NewDelegate().AddAll(object.db, []*dbmodel.Delegate{{
 				Height:    tx.Height,
 				TXHash:    tx.Hash,
 				Delegator: messageData.DelegatorAccount.String(),

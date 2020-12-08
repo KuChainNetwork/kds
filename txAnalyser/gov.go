@@ -9,7 +9,7 @@ import (
 	govTypes "github.com/KuChainNetwork/kuchain/x/gov/types"
 
 	"kds/config"
-	"kds/db/model"
+	"kds/dbmodel"
 	"kds/util"
 )
 
@@ -23,7 +23,7 @@ const (
 func (object *Analyser) onGovMessages(db *gorm.DB,
 	msg sdk.Msg,
 	txResult *abci.ResponseDeliverTx,
-	tx *model.TX) (err error) {
+	tx *dbmodel.TX) (err error) {
 	switch msg.Type() {
 	case govMsgTypeSubmitProposal:
 		// 提议

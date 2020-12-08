@@ -6,7 +6,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	"gorm.io/gorm"
 
-	"kds/db/model"
+	"kds/dbmodel"
 )
 
 const (
@@ -18,7 +18,7 @@ const (
 func (object *Analyser) onEvidenceMessages(db *gorm.DB,
 	msg sdk.Msg,
 	txResult *abci.ResponseDeliverTx,
-	tx *model.TX) (err error) {
+	tx *dbmodel.TX) (err error) {
 	switch msg.Type() {
 	case evidenceMsgTypeSubmitEvidence:
 	case evidenceMsgTypeEquivocation:

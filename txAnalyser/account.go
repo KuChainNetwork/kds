@@ -8,8 +8,8 @@ import (
 
 	accountTypes "github.com/KuChainNetwork/kuchain/x/account/types"
 
-	"kds/db/model"
-	"kds/db/service"
+	"kds/dbmodel"
+	"kds/dbservice"
 )
 
 const (
@@ -21,7 +21,7 @@ const (
 func (object *Analyser) onAccountMessages(db *gorm.DB,
 	msg sdk.Msg,
 	txResult *abci.ResponseDeliverTx,
-	tx *model.TX) (err error) {
+	tx *dbmodel.TX) (err error) {
 	switch msg.Type() {
 	case accountMsgTypeCreate:
 		message := msg.(*accountTypes.MsgCreateAccount)
@@ -34,7 +34,7 @@ func (object *Analyser) onAccountMessages(db *gorm.DB,
 		tx.To = messageData.Name.String()
 		tx.RealTo = tx.To
 		if 0 == txResult.Code {
-			if err = service.NewAccount().Add(db, &model.Account{
+			if err = dbservice.NewAccount().Add(db, &dbmodel.Account{
 				Height:  tx.Height,
 				TXHash:  tx.Hash,
 				Creator: messageData.Creator.String(),
@@ -45,7 +45,7 @@ func (object *Analyser) onAccountMessages(db *gorm.DB,
 				glog.Fatalln(err)
 				return
 			}
-			if err = service.NewStatistics().Increment(db, "total_account", 1); nil != err {
+			if err = dbservice.NewStatistics().Increment(db, "total_account", 1); nil != err {
 				glog.Fatalln(err)
 				return
 			}
@@ -62,7 +62,7 @@ func (object *Analyser) onAccountMessages(db *gorm.DB,
 		tx.From = messageData.Sender().String()
 		tx.To = messageData.Name.String()
 		if 0 == txResult.Code {
-			if err = service.NewAccount().UpdateAuth(db, &model.Account{
+			if err = dbservice.NewAccount().UpdateAuth(db, &dbmodel.Account{
 				Name: messageData.Name.String(),
 				Auth: messageData.Auth.String(),
 			}); nil != err {
