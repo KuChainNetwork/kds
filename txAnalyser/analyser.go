@@ -114,7 +114,7 @@ func (object *Analyser) analyze(limit int64) (err error) {
 							Code:   txResult.Code,
 							Log: func() string {
 								if 0 == txResult.Code {
-									return string(logs[k])
+									return "[" + string(logs[k]) + "]"
 								}
 								return txResult.Log
 							}(),
