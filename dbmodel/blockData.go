@@ -12,7 +12,7 @@ type BlockData struct {
 	Height  int64  `json:"height" gorm:"height;type:bigint(20);index:idx_height,unique,sort:desc;not null"`
 	Block   []byte `json:"block" gorm:"block;type:json;not null"`
 	Results []byte `json:"results" gorm:"results;type:json;not null"`
-	Txn     int64  `json:"txn" gorm:"txn;type:bigint(20);not null;default(0)"`
+	Txn     int64  `json:"txn" gorm:"txn;type:bigint(20);index:tb_block_data_txn_index,not null;default(0)"`
 }
 
 // TableName 表名
