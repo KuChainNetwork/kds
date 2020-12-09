@@ -29,6 +29,7 @@ type Analyser struct {
 	wg              sync.WaitGroup        // 等待组
 	srvTx           *dbservice.TX         // tx数据服务
 	srvStatistics   *dbservice.Statistics // 统计服务
+	srvBlockData    *dbservice.BlockData  // 区块数据服务
 	handlerMap      map[string]func(db *gorm.DB,
 		msg sdk.Msg,
 		txResult *abci.ResponseDeliverTx,
@@ -45,6 +46,7 @@ func New(db *gorm.DB,
 		newDataNotifyCh: newDataNotifyCh,
 		srvTx:           dbservice.NewTX(),
 		srvStatistics:   dbservice.NewStatistics(),
+		srvBlockData:    dbservice.NewBlockData(),
 	}
 	object.handlerMap = map[string]func(db *gorm.DB,
 		msg sdk.Msg,
@@ -71,46 +73,57 @@ func (object *Analyser) fillMessageAndMessageData(tx *dbmodel.TX, message, messa
 }
 
 // analyze 分析数据
-func (object *Analyser) analyze(limit int64) (err error) {
-	start := int64(config.StartBlockHeight)
-	var block *dbmodel.TX
-	blockDataSrv := dbservice.NewBlockData()
-	var blockDataList []*dbmodel.BlockData
+func (object *Analyser) analyze(heightStep int64) (err error) {
+	var start int64 = config.StartBlockHeight
+	var txModel *dbmodel.TX
+	if txModel, err = object.srvTx.Latest(object.db); nil != err {
+		return
+	}
+	if nil != txModel {
+		start = txModel.Height + 1
+	}
 	for {
-		if block, err = object.srvTx.Latest(object.db); nil != err {
-			return
+		var blockDataModelList []*dbmodel.BlockData
+		for begin := start; begin <= singleton.LastBlockHeight; begin += heightStep {
+			if blockDataModelList, err = object.srvBlockData.List(object.db,
+				begin,
+				begin+heightStep,
+				true); nil != err {
+				return
+			}
+			if nil != blockDataModelList && 0 < len(blockDataModelList) {
+				break
+			}
 		}
-		if nil != block {
-			start = block.Height + 1
+		if 0 >= len(blockDataModelList) {
+			break
 		}
-		if blockDataList, err = blockDataSrv.List(object.db, start, limit, true); nil != err || 0 >= len(blockDataList) {
-			return
-		}
-		var block ctypes.ResultBlock
-		var blockResults ctypes.ResultBlockResults
+		var resultBlock ctypes.ResultBlock
+		var resultBlockResults ctypes.ResultBlockResults
 		var stdTx types.StdTx
-		for i := 0; i < len(blockDataList); i++ {
-			object.cdc.MustUnmarshalJSON(blockDataList[i].Block, &block)
-			object.cdc.MustUnmarshalJSON(blockDataList[i].Results, &blockResults)
-			for j, blockTx := range block.Block.Txs {
+		for index := 0; index < len(blockDataModelList); index++ {
+			object.cdc.MustUnmarshalJSON(blockDataModelList[index].Block, &resultBlock)
+			object.cdc.MustUnmarshalJSON(blockDataModelList[index].Results, &resultBlockResults)
+			for j, blockTx := range resultBlock.Block.Txs {
 				object.cdc.MustUnmarshalBinaryLengthPrefixed(blockTx, &stdTx)
 				if 0 >= len(stdTx.Msgs) {
 					continue
 				}
-				txResult := blockResults.TxsResults[j]
+				txResult := resultBlockResults.TxsResults[j]
 				var logs []json.RawMessage
 				if 0 == txResult.Code {
 					singleton.Cdc.MustUnmarshalJSON([]byte(txResult.Log), &logs)
 				}
 				err = object.db.Transaction(func(tx *gorm.DB) (err error) {
+					var allTx []*dbmodel.TX
 					for k := 0; k < len(stdTx.Msgs); k++ {
 						msg := stdTx.Msgs[k]
 						aTx := &dbmodel.TX{
 							Hash:   fmt.Sprintf("%X", blockTx.Hash()),
-							Height: block.Block.Height,
+							Height: resultBlock.Block.Height,
 							Route:  msg.Route(),
 							Type:   msg.Type(),
-							Time:   block.Block.Time,
+							Time:   resultBlock.Block.Time,
 							Code:   txResult.Code,
 							Log: func() string {
 								if 0 == txResult.Code {
@@ -134,12 +147,13 @@ func (object *Analyser) analyze(limit int64) (err error) {
 						} else {
 							glog.Fatalln("unknown route:", msg.Route())
 						}
-						if err = object.srvTx.Add(tx, aTx); nil != err {
-							return
-						}
-						if err = object.srvStatistics.Increment(tx, "total_tx", 1); nil != err {
-							return
-						}
+						allTx = append(allTx, aTx)
+					}
+					if err = object.srvTx.AddAll(tx, allTx); nil != err {
+						return
+					}
+					if err = object.srvStatistics.Increment(tx, "total_tx", len(allTx)); nil != err {
+						return
 					}
 					return
 				})
@@ -148,13 +162,19 @@ func (object *Analyser) analyze(limit int64) (err error) {
 				}
 			}
 		}
+		if txModel, err = object.srvTx.Latest(object.db); nil != err {
+			return
+		}
+		if nil != txModel {
+			start = txModel.Height + 1
+		}
 	}
 	return
 }
 
 // Start 开始分析
-func (object *Analyser) Start(limit int64) (err error) {
-	if err = object.analyze(limit); nil != err {
+func (object *Analyser) Start(heightStep int64) (err error) {
+	if err = object.analyze(heightStep); nil != err {
 		return
 	}
 	object.wg.Add(1)
@@ -167,7 +187,7 @@ func (object *Analyser) Start(limit int64) (err error) {
 				if !ok {
 					break loop
 				}
-				err = object.analyze(limit)
+				err = object.analyze(heightStep)
 				if nil != err {
 					glog.Errorln(err)
 					time.Sleep(1 * time.Second)

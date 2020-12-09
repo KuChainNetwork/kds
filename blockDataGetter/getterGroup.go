@@ -2,6 +2,7 @@ package blockDataGetter
 
 import (
 	"context"
+	"sort"
 	"sync"
 	"time"
 
@@ -111,15 +112,26 @@ func (object *GetterGroup) Start(newDataNotifyCh chan struct{}) (err error) {
 						}
 						continue
 					}
-					blockDataList = append(blockDataList, &dbmodel.BlockData{
-						Height:  res.Height,
-						Block:   object.cdc.MustMarshalJSON(res.Block),
-						Results: object.cdc.MustMarshalJSON(res.Results),
-					})
+					ok := false
+					for _, e := range blockDataList {
+						if e.Height == res.Height {
+							ok = true
+							break
+						}
+					}
+					if !ok {
+						blockDataList = append(blockDataList, &dbmodel.BlockData{
+							Height:  res.Height,
+							Block:   object.cdc.MustMarshalJSON(res.Block),
+							Results: object.cdc.MustMarshalJSON(res.Results),
+							Txn:     int64(len(res.Block.Block.Txs)),
+						})
+					}
 				}
 				if 0 >= len(blockDataList) {
 					continue
 				}
+				sort.Sort(dbmodel.NewBlockDataListSorter(blockDataList))
 				if err = object.db.Transaction(func(tx *gorm.DB) (err error) {
 					if err = object.srvBlockData.AddAll(tx, blockDataList); nil != err {
 						glog.Fatalln(err)

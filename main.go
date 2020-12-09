@@ -3,10 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"kds/dbservice"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"kds/dbservice"
 
 	"github.com/golang/glog"
 
@@ -26,7 +27,8 @@ var (
 	database   = "dev"                         // 数据库名
 	port       = 3307                          // 数据库端口
 	retryTimes = 60                            // 数据库链接重试次数
-	batchLimit = int64(1024)                   // 数据批处理大小限制
+	batchLimit = 1024                          // 数据批处理大小限制
+	heightStep = 100                           // 数据库分析高度步长
 	chainID    = "kratos"                      // 链ID
 	nodeURI    = "http://121.89.211.107:34568" // 节点URI
 	maxGetters = 256                           // 最大区块获取并发数
@@ -61,7 +63,8 @@ func main() {
 	flag.IntVar(&port, "port", 3306, "mysql database port")
 	flag.StringVar(&database, "database", "dev", "mysql database name")
 	flag.IntVar(&retryTimes, "retryTimes", 60, "connect mysql retry times")
-	flag.Int64Var(&batchLimit, "batchLimit", 1024, "analyzer batch process count limit")
+	flag.IntVar(&batchLimit, "batchLimit", 1024, "db batch process limit")
+	flag.IntVar(&heightStep, "heightStep", 100, "list block data height step")
 	flag.StringVar(&chainID, "chainId", "kratos", "chain id")
 	flag.StringVar(&nodeURI, "nodeUri", "http://127.0.0.1:26657", "node uri")
 	flag.IntVar(&maxGetters, "maxGetters", 256, "pull block and block result concurrency number")
@@ -90,12 +93,12 @@ func main() {
 	}
 	// 开始分析
 	blockAnalyserObject := blockAnalyser.New(singleton.DB, singleton.Cdc, singleton.NewDataNotifyCh)
-	if err = blockAnalyserObject.Start(batchLimit); nil != err {
+	if err = blockAnalyserObject.Start(int64(batchLimit)); nil != err {
 		glog.Fatalln(err)
 		return
 	}
 	txAnalyserObject := txAnalyser.New(singleton.DB, singleton.Cdc, singleton.NewDataNotifyCh)
-	if err = txAnalyserObject.Start(batchLimit); nil != err {
+	if err = txAnalyserObject.Start(int64(heightStep)); nil != err {
 		glog.Fatalln(err)
 		return
 	}

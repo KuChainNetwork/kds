@@ -1,6 +1,7 @@
 package blockAnalyser
 
 import (
+	"sort"
 	"strconv"
 	"sync"
 	"time"
@@ -24,6 +25,7 @@ type Analyser struct {
 	wg              sync.WaitGroup        // 等待组
 	srvBlock        *dbservice.Block      // 区块服务
 	srvStatistics   *dbservice.Statistics // 统计服务
+	srvBlockData    *dbservice.BlockData  // 区块数据
 }
 
 // New 工厂方法
@@ -36,57 +38,75 @@ func New(db *gorm.DB,
 		newDataNotifyCh: newDataNotifyCh,
 		srvBlock:        dbservice.NewBlock(),
 		srvStatistics:   dbservice.NewStatistics(),
+		srvBlockData:    dbservice.NewBlockData(),
 	}
 }
 
 // analyze 分析
-func (object *Analyser) analyze(limit int64) (err error) {
-	start := int64(config.StartBlockHeight)
-	var block *dbmodel.Block
-	blockDataSrv := dbservice.NewBlockData()
-	var blockDataList []*dbmodel.BlockData
+func (object *Analyser) analyze(heightStep int64) (err error) {
+	var start int64 = config.StartBlockHeight
+	var blockModel *dbmodel.Block
+	if blockModel, err = object.srvBlock.Latest(object.db); nil != err {
+		return
+	}
+	if nil != blockModel {
+		start = blockModel.Height + 1
+	}
 	for {
-		if block, err = object.srvBlock.Latest(object.db); nil != err {
-			return
+		var blockDataModelList []*dbmodel.BlockData
+		for begin := start; begin <= singleton.LastBlockHeight; begin += heightStep {
+			if blockDataModelList, err = object.srvBlockData.List(object.db,
+				start,
+				start+heightStep,
+				false); nil != err || 0 >= len(blockDataModelList) {
+				return
+			}
+			if nil != blockDataModelList && 0 < len(blockDataModelList) {
+				break
+			}
 		}
-		if nil != block {
-			start = block.Height + 1
+		if 0 >= len(blockDataModelList) {
+			break
 		}
-		if blockDataList, err = blockDataSrv.List(object.db, start, limit, false); nil != err || 0 >= len(blockDataList) {
-			return
-		}
-		var block ctypes.ResultBlock
-		blocks := make([]*dbmodel.Block, 0, limit)
-		for i := 0; i < len(blockDataList); i++ {
-			object.cdc.MustUnmarshalJSON(blockDataList[i].Block, &block)
-			blocks = append(blocks, &dbmodel.Block{
-				Height:    block.Block.Height,
-				Hash:      block.BlockID.Hash.String(),
-				Txn:       int64(len(block.Block.Txs)),
-				Validator: block.Block.ValidatorsHash.String(),
-				Time:      block.Block.Time,
+		var resultBlock ctypes.ResultBlock
+		blockModelList := make([]*dbmodel.Block, 0, len(blockDataModelList))
+		for i := 0; i < len(blockDataModelList); i++ {
+			object.cdc.MustUnmarshalJSON(blockDataModelList[i].Block, &resultBlock)
+			blockModelList = append(blockModelList, &dbmodel.Block{
+				Height:    resultBlock.Block.Height,
+				Hash:      resultBlock.BlockID.Hash.String(),
+				Txn:       int64(len(resultBlock.Block.Txs)),
+				Validator: resultBlock.Block.ValidatorsHash.String(),
+				Time:      resultBlock.Block.Time,
 			})
 			// 索引高度
-			singleton.HeightTrieTree.Add(strconv.FormatInt(block.Block.Height, 10), nil)
+			singleton.HeightTrieTree.Add(strconv.FormatInt(resultBlock.Block.Height, 10), nil)
 		}
+		sort.Sort(dbmodel.NewBlockListSorter(blockModelList))
 		err = object.db.Transaction(func(tx *gorm.DB) (err error) {
-			if err = object.srvBlock.AddAll(tx, blocks); nil != err {
+			if err = object.srvBlock.AddAll(tx, blockModelList); nil != err {
 				return
 			}
 			if err = object.srvStatistics.Updates(tx, map[string]interface{}{
-				"latest_height": blocks[len(blocks)-1].Height,
+				"latest_height": blockModelList[len(blockModelList)-1].Height,
 			}); nil != err {
 				return
 			}
 			return
 		})
+		if blockModel, err = object.srvBlock.Latest(object.db); nil != err {
+			return
+		}
+		if nil != blockModel {
+			start = blockModel.Height + 1
+		}
 	}
 	return
 }
 
 // Start 开始
-func (object *Analyser) Start(limit int64) (err error) {
-	if err = object.analyze(limit); nil != err {
+func (object *Analyser) Start(heightStep int64) (err error) {
+	if err = object.analyze(heightStep); nil != err {
 		return
 	}
 	object.wg.Add(1)
@@ -99,7 +119,7 @@ func (object *Analyser) Start(limit int64) (err error) {
 				if !ok {
 					break loop
 				}
-				err = object.analyze(limit)
+				err = object.analyze(heightStep)
 				if nil != err {
 					glog.Errorln(err)
 					time.Sleep(1 * time.Second)

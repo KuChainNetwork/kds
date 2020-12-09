@@ -24,15 +24,18 @@ func (object *BlockData) AddAll(db *gorm.DB, blocks []*dbmodel.BlockData) (err e
 
 // List
 func (object *BlockData) List(db *gorm.DB,
-	startHeight, limit int64, mustContainsTx bool) (list []*dbmodel.BlockData, err error) {
+	startHeight,
+	endHeight int64,
+	mustContainsTx bool) (list []*dbmodel.BlockData, err error) {
 	var arr []*dbmodel.BlockData
 	if mustContainsTx {
-		db = db.Where("block->'$.block.data.txs' <> cast('null' as JSON)")
+		//db = db.Where("block->'$.block.data.txs' <> cast('null' as JSON)")
+		db = db.Where("txn > 0")
 	}
 	if err = db.Model(&dbmodel.BlockData{}).Select("Height,Block,Results").
-		Order("Height ASC").
 		Where("Height >= ?", startHeight).
-		Limit(int(limit)).Find(&arr).Error; nil != err {
+		Where("Height < ?", endHeight).
+		Find(&arr).Error; nil != err {
 		if gorm.ErrRecordNotFound == err {
 			err = nil
 		}

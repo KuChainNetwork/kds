@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"gorm.io/gorm"
+	"kds/singleton"
 
 	"kds/dbmodel"
 )
@@ -31,9 +32,12 @@ func (object *System) Initialize(db *gorm.DB) (m *dbmodel.System, err error) {
 // UpdateLastBlockHeight
 func (object *System) UpdateLastBlockHeight(db *gorm.DB,
 	height int64) (err error) {
-	return object.Updates(db, map[string]interface{}{
+	if err = object.Updates(db, map[string]interface{}{
 		"LastBlockHeight": height,
-	})
+	}); nil == err {
+		singleton.LastBlockHeight = height
+	}
+	return
 }
 
 // Updates 更新
