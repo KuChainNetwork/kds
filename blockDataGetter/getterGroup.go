@@ -100,7 +100,7 @@ func (object *GetterGroup) Start(newDataNotifyCh chan struct{}) (err error) {
 					blockHeightCh <- curr
 				}
 				var blockDataList []*dbmodel.BlockData
-				for i := 0; i < total; i++ {
+				for i := 0; i < total; {
 					res := <-blockResultCh
 					if nil != res.Error {
 						glog.Error(res.Error)
@@ -112,14 +112,15 @@ func (object *GetterGroup) Start(newDataNotifyCh chan struct{}) (err error) {
 						}
 						continue
 					}
-					ok := false
+					i++
+					exists := false
 					for _, e := range blockDataList {
 						if e.Height == res.Height {
-							ok = true
+							exists = true
 							break
 						}
 					}
-					if !ok {
+					if !exists {
 						blockDataList = append(blockDataList, &dbmodel.BlockData{
 							Height:  res.Height,
 							Block:   object.cdc.MustMarshalJSON(res.Block),

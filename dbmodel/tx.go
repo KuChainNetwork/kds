@@ -20,7 +20,7 @@ type TX struct {
 	Time        time.Time `json:"time" gorm:"time;type:timestamp;not null"`
 	Amount      string    `json:"amount" gorm:"amount;type:varchar(128);not null"`
 	Denom       string    `json:"denom" gorm:"denom;type:varchar(128);not null"`
-	Code        uint32    `json:"code" gorm:"code;type:smallint;not null;index:idx_code"`
+	Code        uint32    `json:"code" gorm:"code;type:bigint(20);not null;index:idx_code"`
 	Log         string    `json:"log" gorm:"log;type:text;null"`
 	Info        string    `json:"info" gorm:"info;type:text;null"`
 	GasWanted   int64     `json:"gas_wanted" gorm:"gas_wanted;type:bigint(20);not null"`

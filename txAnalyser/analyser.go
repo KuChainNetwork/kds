@@ -114,32 +114,39 @@ func (object *Analyser) analyze(heightStep int64) (err error) {
 				if 0 == txResult.Code {
 					singleton.Cdc.MustUnmarshalJSON([]byte(txResult.Log), &logs)
 				}
+				allMsg := make([]sdk.Msg, 0, len(stdTx.Msgs))
+				allTx := make([]*dbmodel.TX, 0, len(stdTx.Msgs))
+				for k := 0; k < len(stdTx.Msgs); k++ {
+					msg := stdTx.Msgs[k]
+					aTx := &dbmodel.TX{
+						Hash:   fmt.Sprintf("%X", blockTx.Hash()),
+						Height: resultBlock.Block.Height,
+						Route:  msg.Route(),
+						Type:   msg.Type(),
+						Time:   resultBlock.Block.Time,
+						Code:   txResult.Code,
+						Log: func() string {
+							if 0 == txResult.Code {
+								return "[" + string(logs[k]) + "]"
+							}
+							return txResult.Log
+						}(),
+						Info:        txResult.Info,
+						GasWanted:   txResult.GasWanted,
+						GasUsed:     txResult.GasUsed,
+						Events:      object.cdc.MustMarshalJSON(txResult.Events),
+						Message:     []byte(`{}`),
+						MessageData: []byte(`{}`),
+					}
+					allMsg = append(allMsg, msg)
+					allTx = append(allTx, aTx)
+					// 索引交易
+					singleton.TXTrieTree.Add(aTx.Hash, nil)
+				}
 				err = object.db.Transaction(func(tx *gorm.DB) (err error) {
-					var allTx []*dbmodel.TX
-					for k := 0; k < len(stdTx.Msgs); k++ {
-						msg := stdTx.Msgs[k]
-						aTx := &dbmodel.TX{
-							Hash:   fmt.Sprintf("%X", blockTx.Hash()),
-							Height: resultBlock.Block.Height,
-							Route:  msg.Route(),
-							Type:   msg.Type(),
-							Time:   resultBlock.Block.Time,
-							Code:   txResult.Code,
-							Log: func() string {
-								if 0 == txResult.Code {
-									return "[" + string(logs[k]) + "]"
-								}
-								return txResult.Log
-							}(),
-							Info:        txResult.Info,
-							GasWanted:   txResult.GasWanted,
-							GasUsed:     txResult.GasUsed,
-							Events:      object.cdc.MustMarshalJSON(txResult.Events),
-							Message:     []byte(`{}`),
-							MessageData: []byte(`{}`),
-						}
-						// 索引交易
-						singleton.TXTrieTree.Add(aTx.Hash, nil)
+					for i := 0; i < len(stdTx.Msgs); i++ {
+						msg := allMsg[i]
+						aTx := allTx[i]
 						if h, ok := object.handlerMap[msg.Route()]; ok {
 							if err = h(tx, msg, txResult, aTx); nil != err {
 								return
@@ -147,7 +154,6 @@ func (object *Analyser) analyze(heightStep int64) (err error) {
 						} else {
 							glog.Fatalln("unknown route:", msg.Route())
 						}
-						allTx = append(allTx, aTx)
 					}
 					if err = object.srvTx.AddAll(tx, allTx); nil != err {
 						return
