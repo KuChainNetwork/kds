@@ -33,8 +33,7 @@ func (object *BlockData) List(db *gorm.DB,
 		db = db.Where("txn > 0")
 	}
 	if err = db.Model(&dbmodel.BlockData{}).Select("Height,Block,Results").
-		Where("Height >= ?", startHeight).
-		Where("Height < ?", endHeight).
+		Where("Height between ? and ?", startHeight, endHeight).
 		Find(&arr).Error; nil != err {
 		if gorm.ErrRecordNotFound == err {
 			err = nil
