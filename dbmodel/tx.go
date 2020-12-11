@@ -10,7 +10,7 @@ import (
 // TX 交易
 type TX struct {
 	gorm.Model
-	Hash        string    `json:"hash" gorm:"hash;type:char(64);not null"`
+	Hash        string    `json:"hash" gorm:"hash;type:char(64);not null;index:idx_hash"`
 	Height      int64     `json:"height" gorm:"height;type:bigint(20);not null;index:idx_height_desc,sort:desc"`
 	Route       string    `json:"route" gorm:"route;type:varchar(128);index:idx_route,type:btree;not null"`
 	Type        string    `json:"type" gorm:"type;type:varchar(64);index:idx_type,type:btree;index:idx_type_from,type:btree;not null"`
