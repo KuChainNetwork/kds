@@ -1,6 +1,7 @@
 package dbservice
 
 import (
+	"errors"
 	"fmt"
 
 	"gorm.io/gorm"
@@ -25,7 +26,7 @@ func (object *Coin) List(db *gorm.DB,
 	offset, limit int) (total int, list []*dbmodel.Coin, err error) {
 	var count int
 	if err = db.Raw(fmt.Sprintf(`select count(id) as count from %s`, object.tableName)).Find(&count).Error; nil != err {
-		if gorm.ErrRecordNotFound == err {
+		if errors.Is(gorm.ErrRecordNotFound, err) {
 			err = nil
 		}
 		return
@@ -46,7 +47,7 @@ func (object *Coin) List(db *gorm.DB,
 			"IssueDenom",
 			"Creator").
 		Find(&_list).Error; nil != err {
-		if gorm.ErrRecordNotFound == err {
+		if errors.Is(gorm.ErrRecordNotFound, err) {
 			err = nil
 		}
 		return
@@ -62,7 +63,7 @@ func (object *Coin) ListSymbol(db *gorm.DB, offset, limit int) (list []string, e
 		Limit(limit).
 		Select("Symbol").
 		Find(&list).Error; nil != err {
-		if gorm.ErrRecordNotFound == err {
+		if errors.Is(gorm.ErrRecordNotFound, err) {
 			err = nil
 		}
 		return
@@ -79,7 +80,7 @@ func (object *Coin) LikeSymbol(db *gorm.DB, key string, offset, limit int) (list
 		Select("symbol").
 		Distinct("symbol").
 		Find(&list).Error; nil != err {
-		if gorm.ErrRecordNotFound == err {
+		if errors.Is(gorm.ErrRecordNotFound, err) {
 			err = nil
 		}
 		return

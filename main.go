@@ -56,6 +56,15 @@ sigLoop:
 	fn()
 }
 
+// @title KDS API
+// @version 1.0
+// @description This is a sample swagger for KDS
+// @termsOfService http://swagger.io/terms/
+// @contact.name API Support
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+// @host localhost:8080
+// @BasePath /
 func main() {
 	flag.StringVar(&username, "username", "dev", "mysql database username")
 	flag.StringVar(&password, "password", "dev", "mysql database password")

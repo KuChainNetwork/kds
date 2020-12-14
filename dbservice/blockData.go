@@ -1,6 +1,8 @@
 package dbservice
 
 import (
+	"errors"
+
 	"kds/dbmodel"
 
 	"gorm.io/gorm"
@@ -35,7 +37,7 @@ func (object *BlockData) List(db *gorm.DB,
 	if err = db.Model(&dbmodel.BlockData{}).Select("Height,Block,Results").
 		Where("Height between ? and ?", startHeight, endHeight).
 		Find(&arr).Error; nil != err {
-		if gorm.ErrRecordNotFound == err {
+		if errors.Is(gorm.ErrRecordNotFound, err) {
 			err = nil
 		}
 		return

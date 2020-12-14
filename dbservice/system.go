@@ -20,7 +20,7 @@ func NewSystem() *System {
 // Initialize initialize system dbmodel
 func (object *System) Initialize(db *gorm.DB) (m *dbmodel.System, err error) {
 	s := &dbmodel.System{LastBlockHeight: 0}
-	if err = db.FirstOrCreate(s).Error; nil == err || gorm.ErrRecordNotFound == err {
+	if err = db.FirstOrCreate(s).Error; nil == err || errors.Is(gorm.ErrRecordNotFound, err) {
 		m = s
 		if nil != err {
 			err = nil

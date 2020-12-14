@@ -1,6 +1,7 @@
 package dbservice
 
 import (
+	"errors"
 	"fmt"
 
 	"gorm.io/gorm"
@@ -25,7 +26,7 @@ func (object *Validator) List(db *gorm.DB, status, offset, limit int) (total int
 	var count int
 	sql := fmt.Sprintf(`select count(id) as count from %s where status = ?`, object.tableName)
 	if err = db.Raw(sql, status).Find(&count).Error; nil != err {
-		if gorm.ErrRecordNotFound == err {
+		if errors.Is(gorm.ErrRecordNotFound, err) {
 			err = nil
 		}
 		return
@@ -40,7 +41,39 @@ func (object *Validator) List(db *gorm.DB, status, offset, limit int) (total int
 		Offset(offset).
 		Limit(limit).
 		Find(&_list).Error; nil != err {
-		if gorm.ErrRecordNotFound == err {
+		if errors.Is(gorm.ErrRecordNotFound, err) {
+			err = nil
+		}
+		return
+	}
+	list = _list
+	return
+}
+
+// ListIdList
+func (object *Validator) ListIdList(db *gorm.DB,
+	idList []uint,
+	offset, limit int) (total int, list []*dbmodel.Validator, err error) {
+	var count int
+	sql := fmt.Sprintf(`select count(id) as count from %s where id in ?`, object.tableName)
+	if err = db.Raw(sql, idList).Find(&count).Error; nil != err {
+		if errors.Is(gorm.ErrRecordNotFound, err) {
+			err = nil
+		}
+		return
+	}
+	if 0 >= count {
+		return
+	}
+	total = count
+	var _list []*dbmodel.Validator
+	if err = db.Select("Validator", "Delegated", "CommissionRate").
+		Where("id in ?", idList).
+		Order("Delegated DESC").
+		Offset(offset).
+		Limit(limit).
+		Find(&_list).Error; nil != err {
+		if errors.Is(gorm.ErrRecordNotFound, err) {
 			err = nil
 		}
 		return
@@ -53,7 +86,7 @@ func (object *Validator) List(db *gorm.DB, status, offset, limit int) (total int
 func (object *Validator) Count(db *gorm.DB) (total int, err error) {
 	sql := fmt.Sprintf(`select count(id) as count from %s`, object.tableName)
 	if err = db.Raw(sql).Find(&total).Error; nil != err {
-		if gorm.ErrRecordNotFound == err {
+		if errors.Is(gorm.ErrRecordNotFound, err) {
 			err = nil
 		}
 		return

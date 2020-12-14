@@ -7,10 +7,10 @@ import (
 	"github.com/golang/glog"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"gorm.io/gorm"
-
 	"kds/config"
-	"kds/dbmodel"
 	"kds/util"
+
+	"kds/dbmodel"
 )
 
 const (

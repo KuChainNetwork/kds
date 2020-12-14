@@ -1,6 +1,7 @@
 package dbservice
 
 import (
+	"errors"
 	"fmt"
 
 	"gorm.io/gorm"
@@ -24,7 +25,7 @@ func NewBlock() *Block {
 func (object *Block) LatestHeight(db *gorm.DB) (height int, err error) {
 	sql := fmt.Sprintf(`select height from %s order by height desc limit 1`, object.tableName)
 	if err = db.Raw(sql, &height).Error; nil != err {
-		if gorm.ErrRecordNotFound == err {
+		if errors.Is(gorm.ErrRecordNotFound, err) {
 			err = nil
 		}
 		return
@@ -39,7 +40,7 @@ func (object *Block) Latest(db *gorm.DB) (m *dbmodel.Block, err error) {
 		Order("Height DESC").
 		Limit(1).
 		Find(&list).Error; nil != err {
-		if gorm.ErrRecordNotFound == err {
+		if errors.Is(gorm.ErrRecordNotFound, err) {
 			err = nil
 		}
 		return
@@ -54,7 +55,7 @@ func (object *Block) Latest(db *gorm.DB) (m *dbmodel.Block, err error) {
 func (object *Block) List(db *gorm.DB, offset, limit, sortByHeight int) (total int, list []*dbmodel.Block, err error) {
 	var count int
 	if err = db.Raw(fmt.Sprintf(`select count(id) as count from %s`, object.tableName)).Find(&count).Error; nil != err {
-		if gorm.ErrRecordNotFound == err {
+		if errors.Is(gorm.ErrRecordNotFound, err) {
 			err = nil
 		}
 		return
@@ -73,7 +74,7 @@ func (object *Block) List(db *gorm.DB, offset, limit, sortByHeight int) (total i
 		Limit(limit).
 		Select("Height", "Hash", "Txn", "Validator", "Time").
 		Find(&_list).Error; nil != err {
-		if gorm.ErrRecordNotFound == err {
+		if errors.Is(gorm.ErrRecordNotFound, err) {
 			err = nil
 		}
 		return
@@ -89,7 +90,7 @@ func (object *Block) ListHeight(db *gorm.DB, offset, limit int) (list []int64, e
 		Limit(limit).
 		Select("Height").
 		Find(&list).Error; nil != err {
-		if gorm.ErrRecordNotFound == err {
+		if errors.Is(gorm.ErrRecordNotFound, err) {
 			err = nil
 		}
 		return

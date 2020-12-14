@@ -2,19 +2,21 @@ package web
 
 import (
 	"fmt"
+	"math"
 	"net"
 	"strconv"
 	"sync"
 	"sync/atomic"
 	"unicode"
 
+	swagger "github.com/arsmn/fiber-swagger/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/golang/glog"
 	"gorm.io/gorm"
-
 	"kds/dbmodel"
 	"kds/dbservice"
+	_ "kds/docs"
 	"kds/singleton"
 	"kds/types"
 )
@@ -68,13 +70,16 @@ func (object *HTTPServer) pageRequestParam(ctx *fiber.Ctx) (req *types.PageReque
 }
 
 // search 搜索
+// @ID search
+// @Summary 聚合搜索
+// @Tags search
+// @Accept json
+// @Produce json
+// @Router /api/v1/search/{word}/{max} [GET]
+// @Param word path string true "搜索关键字"
+// @Param max path int true "响应列表最大长度"
+// @Success 200 {object} SearchResponse
 func (object *HTTPServer) search(ctx *fiber.Ctx) (err error) {
-	type Response struct {
-		AddressList []string `json:"address_list"`
-		TXList      []string `json:"tx_list"`
-		HeightList  []string `json:"height_list"`
-		CoinList    []string `json:"coin_list"`
-	}
 	// 提取参数
 	word := ctx.Params("word")
 	max := ctx.Params("max") // 可选
@@ -118,7 +123,7 @@ func (object *HTTPServer) search(ctx *fiber.Ctx) (err error) {
 	}
 	// 全部为数字
 	if allIsDigit {
-		ctx.JSON(&Response{
+		ctx.JSON(&SearchResponse{
 			TXList:     singleton.TXTrieTree.StartWith(word, maxResult, txFilter),         // 搜索交易
 			HeightList: singleton.HeightTrieTree.StartWith(word, maxResult, heightFilter), // 搜索高度
 		})
@@ -134,7 +139,7 @@ func (object *HTTPServer) search(ctx *fiber.Ctx) (err error) {
 	if coinList, err = object.srvCoin.LikeSymbol(object.db, word, 0, maxResult); nil != err {
 		return
 	}
-	ctx.JSON(&Response{
+	ctx.JSON(&SearchResponse{
 		AddressList: addressList,                                               // 搜索地址
 		TXList:      singleton.TXTrieTree.StartWith(word, maxResult, txFilter), // 搜索交易
 		CoinList:    coinList,                                                  // 搜索代币
@@ -143,16 +148,37 @@ func (object *HTTPServer) search(ctx *fiber.Ctx) (err error) {
 }
 
 // homePageStatistics 主页统计
+// @ID homePageStatistics
+// @Summary 主页统计
+// @Tags statistics
+// @Accept json
+// @Produce json
+// @Router /api/v1/statistics/homePage [GET]
+// @Success 200 {object} StatisticsResponse
 func (object *HTTPServer) homePageStatistics(ctx *fiber.Ctx) (err error) {
 	var statistics *dbmodel.Statistics
 	if statistics, err = object.srvStatistics.Load(object.db); nil != err {
 		return
 	}
-	ctx.JSON(statistics)
+	ctx.JSON(&StatisticsResponse{
+		TotalValidator: statistics.TotalValidator,
+		LatestHeight:   statistics.LatestHeight,
+		TotalTX:        statistics.TotalTX,
+		TotalAccount:   statistics.TotalAccount,
+	})
 	return
 }
 
 // blockList 区块列表
+// @ID blockList
+// @Summary 区块列表
+// @Tags block
+// @Accept json
+// @Produce json
+// @Router /api/v1/block/list/{page_size}/{page} [GET]
+// @Param page_size path int true "页大小"
+// @Param page path int true "页索引"
+// @Success 200 {object} BlockListResponse
 func (object *HTTPServer) blockList(ctx *fiber.Ctx) (err error) {
 	var req *types.PageRequest
 	if req, err = object.pageRequestParam(ctx); nil != err {
@@ -166,14 +192,35 @@ func (object *HTTPServer) blockList(ctx *fiber.Ctx) (err error) {
 		-1 /*height desc*/); nil != err {
 		return
 	}
-	ctx.JSON(&types.PageResponse{
+	ctx.JSON(&BlockListResponse{
 		Total: total,
-		List:  list,
+		List: func() []*BlockResponse {
+			brList := make([]*BlockResponse, len(list), len(list))
+			for i, e := range list {
+				brList[i] = &BlockResponse{
+					Height:    e.Height,
+					Hash:      e.Hash,
+					Txn:       e.Txn,
+					Validator: e.Validator,
+					Time:      e.Time,
+				}
+			}
+			return brList
+		}(),
 	})
 	return
 }
 
 // txList 交易列表
+// @ID txList
+// @Summary 交易列表
+// @Tags tx
+// @Accept json
+// @Produce json
+// @Router /api/v1/tx/list/{page_size}/{page} [GET]
+// @Param page_size path int true "页大小"
+// @Param page path int true "页索引"
+// @Success 200 {object} TXListResponse
 func (object HTTPServer) txList(ctx *fiber.Ctx) (err error) {
 	var req *types.PageRequest
 	if req, err = object.pageRequestParam(ctx); nil != err {
@@ -187,14 +234,40 @@ func (object HTTPServer) txList(ctx *fiber.Ctx) (err error) {
 		-1); nil != err {
 		return
 	}
-	ctx.JSON(&types.PageResponse{
+	ctx.JSON(&TXListResponse{
 		Total: total,
-		List:  list,
+		List: func() []*TXResponse {
+			txrList := make([]*TXResponse, len(list), len(list))
+			for i, e := range list {
+				txrList[i] = &TXResponse{
+					Hash:   e.Hash,
+					Height: e.Height,
+					Route:  e.Route,
+					Type:   e.Type,
+					From:   e.From,
+					To:     e.RealTo,
+					Time:   e.Time,
+					Amount: e.Amount,
+					Denom:  e.Denom,
+				}
+			}
+			return txrList
+		}(),
 	})
 	return
 }
 
 // validatorList 验证人列表
+// @ID validatorList
+// @Summary 验证人列表
+// @Tags validator
+// @Accept json
+// @Produce json
+// @Router /api/v1/validator/list/{type}/{page_size}/{page} [GET]
+// @Param type path int true "验证人类型"
+// @Param page_size path int true "页大小"
+// @Param page path int true "页索引"
+// @Success 200 {object} ValidatorListResponse
 func (object *HTTPServer) validatorList(ctx *fiber.Ctx) (err error) {
 	var req *types.PageRequest
 	if req, err = object.pageRequestParam(ctx); nil != err {
@@ -208,14 +281,34 @@ func (object *HTTPServer) validatorList(ctx *fiber.Ctx) (err error) {
 		req.Limit()); nil != err {
 		return
 	}
-	ctx.JSON(&types.PageResponse{
+	ctx.JSON(&ValidatorListResponse{
 		Total: total,
-		List:  list,
+		List: func() []*ValidatorResponse {
+			vrList := make([]*ValidatorResponse, len(list), len(list))
+			for i, e := range list {
+				vrList[i] = &ValidatorResponse{
+					Rank:           i + 1,
+					Validator:      e.Validator,
+					Delegated:      e.Delegated.String(),
+					CommissionRate: e.CommissionRate,
+				}
+			}
+			return vrList
+		}(),
 	})
 	return
 }
 
 // delegateList 投票列表
+// @ID delegateList
+// @Summary 投票列表
+// @Tags delegate
+// @Accept json
+// @Produce json
+// @Router /api/v1/delegate/list/{page_size}/{page} [GET]
+// @Param page_size path int true "页大小"
+// @Param page path int true "页索引"
+// @Success 200 {object} DelegateListResponse
 func (object *HTTPServer) delegateList(ctx *fiber.Ctx) (err error) {
 	var req *types.PageRequest
 	if req, err = object.pageRequestParam(ctx); nil != err {
@@ -228,14 +321,49 @@ func (object *HTTPServer) delegateList(ctx *fiber.Ctx) (err error) {
 		req.Limit()); nil != err {
 		return
 	}
-	ctx.JSON(&types.PageResponse{
+	var validatorList []*dbmodel.Validator
+	_, validatorList, err = object.srvValidator.ListIdList(object.db, func() []uint {
+		idList := make([]uint, len(list))
+		for i, e := range list {
+			idList[i] = e.ID
+		}
+		return idList
+	}(), 0, math.MaxInt64)
+	if nil != err {
+		return
+	}
+	commissionRateLookupTable := make(map[string]uint64, len(validatorList))
+	for _, e := range validatorList {
+		commissionRateLookupTable[e.Validator] = e.CommissionRate
+	}
+	ctx.JSON(&DelegateListResponse{
 		Total: total,
-		List:  list,
+		List: func() []*DelegateResponse {
+			drList := make([]*DelegateResponse, len(list), len(list))
+			for i, e := range list {
+				drList[i] = &DelegateResponse{
+					Rank:           i + 1,
+					Validator:      e.Validator,
+					Amount:         e.Amount,
+					CommissionRate: commissionRateLookupTable[e.Validator],
+				}
+			}
+			return drList
+		}(),
 	})
 	return
 }
 
 // coinList 代币列表
+// @ID coinList
+// @Summary 代币列表
+// @Tags coin
+// @Accept json
+// @Produce json
+// @Router /api/v1/coin/list/{page_size}/{page} [GET]
+// @Param page_size path int true "页大小"
+// @Param page path int true "页索引"
+// @Success 200 {object} CoinListResponse
 func (object *HTTPServer) coinList(ctx *fiber.Ctx) (err error) {
 	var req *types.PageRequest
 	if req, err = object.pageRequestParam(ctx); nil != err {
@@ -248,11 +376,23 @@ func (object *HTTPServer) coinList(ctx *fiber.Ctx) (err error) {
 		req.Limit()); nil != err {
 		return
 	}
-	ctx.JSON(&types.PageResponse{
+	ctx.JSON(&CoinListResponse{
 		Total: total,
-		List:  list,
+		List: func() []*CoinResponse {
+			crList := make([]*CoinResponse, len(list), len(list))
+			for i, e := range list {
+				crList[i] = &CoinResponse{
+					Creator:         e.Creator,
+					Symbol:          e.Symbol,
+					MaxSupplyAmount: e.MaxSupplyAmount,
+					IssueAmount:     e.IssueAmount,
+					Description:     e.Description,
+					Time:            e.Time,
+				}
+			}
+			return crList
+		}(),
 	})
-	return
 	return
 }
 
@@ -266,6 +406,7 @@ func (object *HTTPServer) Start() (err error) {
 	}
 	app := fiber.New()
 	app.Use(logger.New())
+	app.Get("/swagger/*", swagger.Handler)
 	app.Get("/api/v1/search/:word/:max?", object.search)
 	gpStatistics := app.Group("/api/v1/statistics")
 	gpStatistics.Get("/homePage", object.homePageStatistics)

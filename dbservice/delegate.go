@@ -1,6 +1,7 @@
 package dbservice
 
 import (
+	"errors"
 	"fmt"
 
 	"gorm.io/gorm"
@@ -26,7 +27,7 @@ func (object *Delegate) List(db *gorm.DB, offset, limit int) (total int, list []
 	sql := fmt.Sprintf(`select count(id) as count from %s group by validator`,
 		object.tableName)
 	if err = db.Raw(sql).Find(&count).Error; nil != err {
-		if gorm.ErrRecordNotFound == err {
+		if errors.Is(gorm.ErrRecordNotFound, err) {
 			err = nil
 		}
 		return
@@ -45,7 +46,7 @@ limit %d offset %d) tb_delegate`,
 		offset)
 	var _list []*dbmodel.Delegate
 	if err = db.Raw(sql).Find(&_list).Error; nil != err {
-		if gorm.ErrRecordNotFound == err {
+		if errors.Is(gorm.ErrRecordNotFound, err) {
 			err = nil
 		}
 		return

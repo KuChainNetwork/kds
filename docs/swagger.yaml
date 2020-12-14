@@ -1,0 +1,383 @@
+basePath: /
+definitions:
+  web.BlockListResponse:
+    properties:
+      list:
+        description: 列表
+        items:
+          $ref: '#/definitions/web.BlockResponse'
+        type: array
+      total:
+        description: 总数
+        type: integer
+    type: object
+  web.BlockResponse:
+    properties:
+      hash:
+        description: 交易HASH
+        type: string
+      height:
+        description: 高度
+        type: integer
+      time:
+        description: 时间
+        type: string
+      txn:
+        description: 交易数量
+        type: integer
+      validator:
+        description: 验证人
+        type: string
+    type: object
+  web.CoinListResponse:
+    properties:
+      list:
+        description: 列表
+        items:
+          $ref: '#/definitions/web.CoinResponse'
+        type: array
+      total:
+        description: 总数
+        type: integer
+    type: object
+  web.CoinResponse:
+    properties:
+      creator:
+        description: 发行人
+        type: string
+      description:
+        description: 描述
+        type: string
+      issue_amount:
+        description: 流通总量
+        type: string
+      max_supply_amount:
+        description: 发型总量
+        type: string
+      symbol:
+        description: 名称
+        type: string
+      time:
+        description: 创建时间
+        type: string
+    type: object
+  web.DelegateListResponse:
+    properties:
+      list:
+        description: 列表
+        items:
+          $ref: '#/definitions/web.DelegateResponse'
+        type: array
+      total:
+        description: 总数
+        type: integer
+    type: object
+  web.DelegateResponse:
+    properties:
+      amount:
+        description: 实时投票数
+        type: number
+      commission_rate:
+        description: 佣金比例
+        type: integer
+      rank:
+        description: 排名
+        type: integer
+      validator:
+        description: 节点名
+        type: string
+    type: object
+  web.SearchResponse:
+    properties:
+      address_list:
+        description: 地址列表
+        items:
+          type: string
+        type: array
+      coin_list:
+        description: 代币列表
+        items:
+          type: string
+        type: array
+      height_list:
+        description: 高度列表
+        items:
+          type: string
+        type: array
+      tx_list:
+        description: 交易列表
+        items:
+          type: string
+        type: array
+    type: object
+  web.StatisticsResponse:
+    properties:
+      latest_height:
+        description: 最后区块高度
+        type: integer
+      total_account:
+        description: 总账户数
+        type: integer
+      total_tx:
+        description: 总交易数
+        type: integer
+      total_validator:
+        description: 总验证人
+        type: integer
+    type: object
+  web.TXListResponse:
+    properties:
+      list:
+        description: 列表
+        items:
+          $ref: '#/definitions/web.TXResponse'
+        type: array
+      total:
+        description: 总数
+        type: integer
+    type: object
+  web.TXResponse:
+    properties:
+      amount:
+        description: 交易总额
+        type: string
+      denom:
+        description: 交易类型
+        type: string
+      from:
+        description: 交易发起方
+        type: string
+      hash:
+        description: 交易HASH
+        type: string
+      height:
+        description: 交易高度
+        type: integer
+      route:
+        description: 交易路由
+        type: string
+      time:
+        description: 交易时间
+        type: string
+      to:
+        description: 交易接收方
+        type: string
+      type:
+        description: 交易类型
+        type: string
+    type: object
+  web.ValidatorListResponse:
+    properties:
+      list:
+        description: 列表
+        items:
+          $ref: '#/definitions/web.ValidatorResponse'
+        type: array
+      total:
+        description: 总数
+        type: integer
+    type: object
+  web.ValidatorResponse:
+    properties:
+      commission_rate:
+        description: 佣金比例
+        type: integer
+      delegated:
+        description: 抵押
+        type: string
+      rank:
+        description: 排名
+        type: integer
+      validator:
+        description: 验证人
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    name: API Support
+  description: This is a sample swagger for KDS
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: KDS API
+  version: "1.0"
+paths:
+  /api/v1/block/list/{page_size}/{page}:
+    get:
+      consumes:
+      - application/json
+      operationId: blockList
+      parameters:
+      - description: 页大小
+        in: path
+        name: page_size
+        required: true
+        type: integer
+      - description: 页索引
+        in: path
+        name: page
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/web.BlockListResponse'
+      summary: 区块列表
+      tags:
+      - block
+  /api/v1/coin/list/{page_size}/{page}:
+    get:
+      consumes:
+      - application/json
+      operationId: coinList
+      parameters:
+      - description: 页大小
+        in: path
+        name: page_size
+        required: true
+        type: integer
+      - description: 页索引
+        in: path
+        name: page
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/web.CoinListResponse'
+      summary: 代币列表
+      tags:
+      - coin
+  /api/v1/delegate/list/{page_size}/{page}:
+    get:
+      consumes:
+      - application/json
+      operationId: delegateList
+      parameters:
+      - description: 页大小
+        in: path
+        name: page_size
+        required: true
+        type: integer
+      - description: 页索引
+        in: path
+        name: page
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/web.DelegateListResponse'
+      summary: 投票列表
+      tags:
+      - delegate
+  /api/v1/search/{word}/{max}:
+    get:
+      consumes:
+      - application/json
+      operationId: search
+      parameters:
+      - description: 搜索关键字
+        in: path
+        name: word
+        required: true
+        type: string
+      - description: 响应列表最大长度
+        in: path
+        name: max
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/web.SearchResponse'
+      summary: 聚合搜索
+      tags:
+      - search
+  /api/v1/statistics/homePage:
+    get:
+      consumes:
+      - application/json
+      operationId: homePageStatistics
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/web.StatisticsResponse'
+      summary: 主页统计
+      tags:
+      - statistics
+  /api/v1/tx/list/{page_size}/{page}:
+    get:
+      consumes:
+      - application/json
+      operationId: txList
+      parameters:
+      - description: 页大小
+        in: path
+        name: page_size
+        required: true
+        type: integer
+      - description: 页索引
+        in: path
+        name: page
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/web.TXListResponse'
+      summary: 交易列表
+      tags:
+      - tx
+  /api/v1/validator/list/{type}/{page_size}/{page}:
+    get:
+      consumes:
+      - application/json
+      operationId: validatorList
+      parameters:
+      - description: 验证人类型
+        in: path
+        name: type
+        required: true
+        type: integer
+      - description: 页大小
+        in: path
+        name: page_size
+        required: true
+        type: integer
+      - description: 页索引
+        in: path
+        name: page
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/web.ValidatorListResponse'
+      summary: 验证人列表
+      tags:
+      - validator
+swagger: "2.0"

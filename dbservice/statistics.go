@@ -1,6 +1,7 @@
 package dbservice
 
 import (
+	"errors"
 	"fmt"
 
 	"gorm.io/gorm"
@@ -30,7 +31,7 @@ func (object *Statistics) Load(db *gorm.DB) (statistics *dbmodel.Statistics, err
 	var _statistics dbmodel.Statistics
 	if err = db.Where("id=?", 1).
 		Find(&_statistics).Error; nil != err {
-		if gorm.ErrRecordNotFound == err {
+		if errors.Is(gorm.ErrRecordNotFound, err) {
 			err = nil
 		}
 		return

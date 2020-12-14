@@ -1,6 +1,7 @@
 package dbservice
 
 import (
+	"errors"
 	"fmt"
 
 	"gorm.io/gorm"
@@ -25,7 +26,7 @@ func (object *Account) ListAddress(db *gorm.DB, offset, limit int) (list []strin
 		Limit(limit).
 		Select("Creator").
 		Find(&list).Error; nil != err {
-		if gorm.ErrRecordNotFound == err {
+		if errors.Is(gorm.ErrRecordNotFound, err) {
 			err = nil
 		}
 		return
@@ -42,7 +43,7 @@ func (object *Account) LikeAddress(db *gorm.DB, key string, offset, limit int) (
 		Select("creator").
 		Distinct("creator").
 		Find(&list).Error; nil != err {
-		if gorm.ErrRecordNotFound == err {
+		if errors.Is(gorm.ErrRecordNotFound, err) {
 			err = nil
 		}
 		return

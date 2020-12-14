@@ -59,7 +59,7 @@ func (object *TX) List(db *gorm.DB, offset, limit, sortByHeight int) (total int,
 	}
 	if err = db.Offset(offset).
 		Limit(limit).
-		Select("Hash", "Height", "Time", "Status", "From", "RealTo", "Amount", "Denom").
+		Select("Hash", "Height", "Time", "From", "RealTo", "Amount", "Denom").
 		Find(&_list).Error; nil != err {
 		if gorm.ErrRecordNotFound == err {
 			err = nil

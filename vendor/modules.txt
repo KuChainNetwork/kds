@@ -109,10 +109,23 @@ github.com/KuChainNetwork/kuchain/x/supply/exported
 github.com/KuChainNetwork/kuchain/x/supply/keeper
 github.com/KuChainNetwork/kuchain/x/supply/simulation
 github.com/KuChainNetwork/kuchain/x/supply/types
+# github.com/KyleBanks/depth v1.2.1
+github.com/KyleBanks/depth
+# github.com/PuerkitoBio/purell v1.1.1
+github.com/PuerkitoBio/purell
+# github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578
+github.com/PuerkitoBio/urlesc
 # github.com/Workiva/go-datastructures v1.0.52
 github.com/Workiva/go-datastructures/queue
-# github.com/andybalholm/brotli v1.0.0
+# github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
+## explicit
+github.com/alecthomas/template
+github.com/alecthomas/template/parse
+# github.com/andybalholm/brotli v1.0.1
 github.com/andybalholm/brotli
+# github.com/arsmn/fiber-swagger/v2 v2.2.0
+## explicit
+github.com/arsmn/fiber-swagger/v2
 # github.com/bartekn/go-bip39 v0.0.0-20171116152956-a05967ea095d
 github.com/bartekn/go-bip39
 # github.com/beorn7/perks v1.0.1
@@ -213,8 +226,6 @@ github.com/dvsekhvalnov/jose2go/keys/ecc
 github.com/dvsekhvalnov/jose2go/padding
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
-# github.com/gin-gonic/gin v1.6.3
-## explicit
 # github.com/go-kit/kit v0.10.0
 github.com/go-kit/kit/log
 github.com/go-kit/kit/log/level
@@ -225,6 +236,14 @@ github.com/go-kit/kit/metrics/internal/lv
 github.com/go-kit/kit/metrics/prometheus
 # github.com/go-logfmt/logfmt v0.5.0
 github.com/go-logfmt/logfmt
+# github.com/go-openapi/jsonpointer v0.19.3
+github.com/go-openapi/jsonpointer
+# github.com/go-openapi/jsonreference v0.19.4
+github.com/go-openapi/jsonreference
+# github.com/go-openapi/spec v0.19.9
+github.com/go-openapi/spec
+# github.com/go-openapi/swag v0.19.5
+github.com/go-openapi/swag
 # github.com/go-pg/pg/v10 v10.0.0-beta.1
 github.com/go-pg/pg/v10
 github.com/go-pg/pg/v10/internal
@@ -241,15 +260,18 @@ github.com/go-pg/zerochecker
 github.com/go-sql-driver/mysql
 # github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2
 github.com/godbus/dbus
-# github.com/gofiber/fiber/v2 v2.1.4
+# github.com/gofiber/fiber/v2 v2.2.0
 ## explicit
 github.com/gofiber/fiber/v2
 github.com/gofiber/fiber/v2/internal/bytebufferpool
 github.com/gofiber/fiber/v2/internal/colorable
 github.com/gofiber/fiber/v2/internal/encoding/ascii
 github.com/gofiber/fiber/v2/internal/encoding/json
+github.com/gofiber/fiber/v2/internal/fasttemplate
 github.com/gofiber/fiber/v2/internal/isatty
 github.com/gofiber/fiber/v2/internal/schema
+github.com/gofiber/fiber/v2/middleware/filesystem
+github.com/gofiber/fiber/v2/middleware/logger
 github.com/gofiber/fiber/v2/utils
 # github.com/gogo/protobuf v1.3.1
 github.com/gogo/protobuf/gogoproto
@@ -312,7 +334,7 @@ github.com/jmhodges/levigo
 github.com/jtolds/gls
 # github.com/keybase/go-keychain v0.0.0-20190712205309-48d3d31d256d
 github.com/keybase/go-keychain
-# github.com/klauspost/compress v1.10.7
+# github.com/klauspost/compress v1.11.3
 github.com/klauspost/compress/flate
 github.com/klauspost/compress/gzip
 github.com/klauspost/compress/zlib
@@ -320,6 +342,10 @@ github.com/klauspost/compress/zlib
 github.com/libp2p/go-buffer-pool
 # github.com/magiconair/properties v1.8.1
 github.com/magiconair/properties
+# github.com/mailru/easyjson v0.0.0-20190626092158-b2ccc519800e
+github.com/mailru/easyjson/buffer
+github.com/mailru/easyjson/jlexer
+github.com/mailru/easyjson/jwriter
 # github.com/mattn/go-isatty v0.0.12
 github.com/mattn/go-isatty
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
@@ -388,6 +414,11 @@ github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # github.com/subosito/gotenv v1.2.0
 github.com/subosito/gotenv
+# github.com/swaggo/files v0.0.0-20190704085106-630677cd5c14
+github.com/swaggo/files
+# github.com/swaggo/swag v1.6.9
+## explicit
+github.com/swaggo/swag
 # github.com/syndtr/goleveldb v1.0.1-0.20190923125748-758128399b1d
 github.com/syndtr/goleveldb/leveldb
 github.com/syndtr/goleveldb/leveldb/cache
@@ -573,7 +604,9 @@ golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
 golang.org/x/net/netutil
 golang.org/x/net/trace
-# golang.org/x/sys v0.0.0-20201101102859-da207088b7d1
+golang.org/x/net/webdav
+golang.org/x/net/webdav/internal/xml
+# golang.org/x/sys v0.0.0-20201113233024-12cec1faf1ba
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
@@ -583,6 +616,12 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
+golang.org/x/text/width
+# golang.org/x/tools v0.0.0-20200820010801-b793a1359eac
+golang.org/x/tools/go/ast/astutil
+golang.org/x/tools/go/buildutil
+golang.org/x/tools/go/internal/cgo
+golang.org/x/tools/go/loader
 # google.golang.org/appengine v1.6.6
 google.golang.org/appengine
 google.golang.org/appengine/datastore
